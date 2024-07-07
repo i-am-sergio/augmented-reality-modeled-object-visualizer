@@ -45,7 +45,7 @@ struct Face {
 class Load3DModel {
 private:
     std::vector<cv::Point3f> vertices;
-    std::vector<cv::Point3f> normals;
+    std::vector<cv::Point3f> normals; 
     std::vector<cv::Point2f> texCoords;
     std::vector<Face> faces;
 
@@ -91,7 +91,7 @@ public:
                 vertex.y += dy;
                 vertex.z += dz;
                 vertices.push_back(vertex);
-            } else if (type == "vn") {
+            } else if (type == "vn") { 
                 cv::Point3f normal;
                 ss >> normal.x >> normal.y >> normal.z;
                 if (swapyz) {

@@ -103,6 +103,8 @@ class LoadCamera {
         }
 
         void showCamera(){
+            double movement = 0.0;  // Variable para controlar el movimiento en el eje Z
+            bool move_up = true;    // Variable para controlar la dirección del movimiento
 
             while (true){
                 this->cap >> frame;
@@ -128,8 +130,6 @@ class LoadCamera {
                     std::vector<cv::Vec3d> rvecs, tvecs;
                     cv::aruco::estimatePoseSingleMarkers(markerCorners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-                    // objectsProjections[0].processFrame(frame, markerIDs, markerCorners, cameraMatrix, distCoeffs, markerLength);
-
                     for (size_t i = 0; i < markerIDs.size(); i++){
                         // Draw axis for each marker
                         cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
@@ -137,19 +137,19 @@ class LoadCamera {
                         // Select the vertices based on the marker ID
                         if (markerIDs[i] == 11) 
                         {
-                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                         } 
                         else if (markerIDs[i] == 12) 
                         {
-                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                         } 
                         else if (markerIDs[i] == 13) 
                         {
-                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                         }
                         else if (markerIDs[i] == 14) 
                         {
-                            objectsProjections[3].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                            objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                         }
                         else if (markerIDs[i] == 40) 
                         {
@@ -164,6 +164,19 @@ class LoadCamera {
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
                             drawPrism(frame, imgpts);
+                        }
+                    }
+
+                    // Controlar la animación del movimiento en el eje Z
+                    if (move_up) {
+                        movement += 0.01;  // Incrementar movimiento hacia arriba
+                        if (movement >= 0.1) {
+                            move_up = false;  // Cambiar dirección al alcanzar el límite superior
+                        }
+                    } else {
+                        movement -= 0.01;  // Decrementar movimiento hacia abajo
+                        if (movement <= -0.1) {
+                            move_up = true;  // Cambiar dirección al alcanzar el límite inferior
                         }
                     }
                 }
