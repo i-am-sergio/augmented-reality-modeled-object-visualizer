@@ -3,6 +3,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 #include <vector>
+#include "ObjectProjection.hpp"
 
 using namespace cv;
 using namespace std;
@@ -127,18 +128,13 @@ class LoadCamera {
                         // Draw axis for each marker
                         cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
-                        std::cout << "len marker ids: " << markerIDs.size() << std::endl;
-                        std::cout << "Rotation vector: " << rvecs[i] << std::endl;
-                        std::cout << "Translation vector: " << tvecs[i] << std::endl;
-                        std::cout << "ids: " << markerIDs[0] << std::endl;
-
                         // Select the vertices based on the marker ID
-                        if (markerIDs[i] == 25) {
+                        if (markerIDs[i] == 30) {
                             auto vertices = getCubeVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
                             drawCube(frame, imgpts);
-                        } else if (markerIDs[i] == 30) {
+                        } else if (markerIDs[i] == 35) {
                             auto vertices = getPrismVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);

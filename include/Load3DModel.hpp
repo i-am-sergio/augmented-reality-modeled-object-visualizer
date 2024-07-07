@@ -57,8 +57,20 @@ class Load3DModel
         std::vector<Vec2> texCoords;
         std::vector<Face> faces;
 
+        // Desplazamiento
+        float dx, dy, dz;
+        // Escala
+        float scaleFactor;
+        // Marker length
+        float markerLength;
+
     public: 
-        Load3DModel(const std::string& filename, bool swapyz = true){
+        Load3DModel(const std::string& filename, bool swapyz = true, float dx = 0, float dy = 0, float dz = 0, float markerLength = 0.1, float scaleFactor = 1.0){
+            this->dx = dx;
+            this->dy = dy;
+            this->dz = dz;
+            this->scaleFactor = scaleFactor;
+            this->markerLength = markerLength;
             load(filename, swapyz);
         }
 
@@ -83,6 +95,9 @@ class Load3DModel
                     if (swapyz) {
                         std::swap(vertex.y, vertex.z);
                     }
+                    vertex.x += dx;
+                    vertex.y += dy;
+                    vertex.z += dz;
                     vertices.push_back(vertex);
                 } else if (type == "vn") {
                     Vec3 normal;
@@ -119,13 +134,15 @@ class Load3DModel
                     faces.push_back(face);
                 }
             }
+            scaleVertices(scaleFactor);
+            file.close();
         }
 
         std::vector<Vec3> getVertices(){ return vertices; }
 
         std::vector<Vec3> getNormals(){ return normals; }
 
-        std::vector<Vec2> gettexCoords(){ return texCoords; }
+        std::vector<Vec2> getTexCoords(){ return texCoords; }
 
         std::vector<Face> getFaces(){ return faces; }
 
@@ -156,5 +173,28 @@ class Load3DModel
                 std::cout << face << std::endl;
             }
             std::cout << "# faces: " << faces.size() << std::endl;
+        }
+
+        void scaleVertices(float scaleFactor){
+            for (auto& vertex : vertices){
+                vertex.x *= scaleFactor;
+                vertex.y *= scaleFactor;
+                vertex.z *= scaleFactor;
+            }
+
+            if (normals.size() != 0){
+                for (auto& normal : normals){
+                    normal.x *= scaleFactor;
+                    normal.y *= scaleFactor;
+                    normal.z *= scaleFactor;
+                }
+            }
+
+            if (texCoords.size() != 0){
+                for (auto& texcoord : texCoords){
+                    texcoord.u *= scaleFactor;
+                    texcoord.v *= scaleFactor;
+                }
+            }
         }
 };
