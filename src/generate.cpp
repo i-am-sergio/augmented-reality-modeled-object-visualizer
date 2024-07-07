@@ -13,6 +13,6 @@ int main() {
     // Generate marker 11 y 12 together
     std::vector<int> markerIds3 = {11, 12, 13, 14};
     PatternsGenerator<cv::aruco::DICT_4X4_50> generator3(400, 200, markerIds3);
-    generator3.generateFourMarkersInOneImage();
+    generator3.generateFourMarkersInRowRectangularImage();
     return 0;
 }
