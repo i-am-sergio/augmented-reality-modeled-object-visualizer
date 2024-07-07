@@ -3,9 +3,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 #include <vector>
+#include "ObjectProjection.hpp"
 
 using namespace cv;
 using namespace std;
+
 float markerLength = 0.1f;
 float dx = -0.05f, dy = -0.05f, dz = 0.15f;
 
@@ -75,15 +77,18 @@ class LoadCamera {
         float markerLength; // Marker length in meters
         cv::Ptr<cv::aruco::Dictionary> arucoDict;
         cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
+        vector<ObjectProjection> objectsProjections;
 
     public:
-        LoadCamera(){
+        LoadCamera(vector<ObjectProjection>& objectsProjections){
+            // Objects projections
+            this->objectsProjections = objectsProjections;
             // Default camera calibration parameters (needs to be calibrated for actual use)
-            cameraMatrix = (cv::Mat_<float>(3, 3) << 800, 0, 320, 0, 800, 240, 0, 0, 1);
-            distCoeffs = cv::Mat::zeros(5, 1, CV_32F);
-            arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50));
-            detectorParams = new cv::aruco::DetectorParameters();
-            markerLength = 0.1f;
+            this->cameraMatrix = (cv::Mat_<float>(3, 3) << 800, 0, 320, 0, 800, 240, 0, 0, 1);
+            this->distCoeffs = cv::Mat::zeros(5, 1, CV_32F);
+            this->arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50));
+            this->detectorParams = new cv::aruco::DetectorParameters();
+            this->markerLength = 0.1f;
         }
 
         ~LoadCamera(){
@@ -123,22 +128,34 @@ class LoadCamera {
                     std::vector<cv::Vec3d> rvecs, tvecs;
                     cv::aruco::estimatePoseSingleMarkers(markerCorners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
 
+                    // objectsProjections[0].processFrame(frame, markerIDs, markerCorners, cameraMatrix, distCoeffs, markerLength);
+
                     for (size_t i = 0; i < markerIDs.size(); i++){
                         // Draw axis for each marker
                         cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
-                        std::cout << "len marker ids: " << markerIDs.size() << std::endl;
-                        std::cout << "Rotation vector: " << rvecs[i] << std::endl;
-                        std::cout << "Translation vector: " << tvecs[i] << std::endl;
-                        std::cout << "ids: " << markerIDs[0] << std::endl;
-
                         // Select the vertices based on the marker ID
-                        if (markerIDs[i] == 25) {
+                        if (markerIDs[i] == 25) 
+                        {
+                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                        } 
+                        else if (markerIDs[i] == 30) 
+                        {
+                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                        } 
+                        else if (markerIDs[i] == 35) 
+                        {
+                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                        }
+                        else if (markerIDs[i] == 40) 
+                        {
                             auto vertices = getCubeVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
                             drawCube(frame, imgpts);
-                        } else if (markerIDs[i] == 30) {
+                        } 
+                        else if (markerIDs[i] == 41) 
+                        {
                             auto vertices = getPrismVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
