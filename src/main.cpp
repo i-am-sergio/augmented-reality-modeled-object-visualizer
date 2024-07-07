@@ -6,7 +6,7 @@
 
 using namespace std;
 
-void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjection>& objects) {
+void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjection>& objects, float dx = 0, float dy = 0, float dz = 0.15f) {
     Load3DModel model(modelPath, true, 0, 0, 0.15f, 0.05, scaleFactor);
     vector<cv::Point3f> vertices = model.getVertices();
     vector<cv::Point3f> normals = model.getNormals();
@@ -22,6 +22,7 @@ int main(){
     loadAndAddModel("models/wolf.obj", 0.0004f, objects);
     loadAndAddModel("models/rat.obj", 0.004f, objects);
     loadAndAddModel("models/fox.obj", 0.002f, objects);
+    loadAndAddModel("models/pegasus.obj", 0.05f, objects, 0, 0, 0);
 
     // Load camera
     LoadCamera camera(objects);

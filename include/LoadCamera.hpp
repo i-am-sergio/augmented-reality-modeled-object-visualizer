@@ -135,17 +135,21 @@ class LoadCamera {
                         cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
                         // Select the vertices based on the marker ID
-                        if (markerIDs[i] == 25) 
+                        if (markerIDs[i] == 11) 
                         {
                             objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
                         } 
-                        else if (markerIDs[i] == 30) 
+                        else if (markerIDs[i] == 12) 
                         {
                             objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
                         } 
-                        else if (markerIDs[i] == 35) 
+                        else if (markerIDs[i] == 13) 
                         {
                             objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
+                        }
+                        else if (markerIDs[i] == 14) 
+                        {
+                            objectsProjections[3].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs);
                         }
                         else if (markerIDs[i] == 40) 
                         {
