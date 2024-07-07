@@ -86,4 +86,41 @@ class PatternsGenerator {
                 cv::imwrite(filename, pastel_marker);
             }
         }
+
+        void generateFourMarkersInOneImage() {
+            // Generar una imagen blanca para contener los cuatro marcadores
+            cv::Mat combined_image = cv::Mat::ones(imgSize * 2, imgSize * 2, CV_8UC3) * 255;
+
+            // Generador de números aleatorios para colores pastel
+            cv::RNG rng(12345);
+
+            // Iterar sobre los primeros cuatro marcadores en markerIds
+            for (size_t i = 0; i < std::min<size_t>(4, markerIds.size()); ++i) {
+                int markerId = markerIds[i];
+
+                // Generar el marcador
+                cv::Mat marker;
+                cv::aruco::generateImageMarker(*arucoDict, markerId, markerSize, marker);
+
+                // Centrar el marcador en un fondo pastel diferente
+                cv::Mat pastel_marker = centerMarkerOnPastelBackground(marker, rng);
+
+                // Calcular las coordenadas para colocar el marcador en la imagen combinada
+                int row = i / 2;
+                int col = i % 2;
+                cv::Mat roi = combined_image(cv::Rect(col * imgSize, row * imgSize, imgSize, imgSize));
+
+                // Copiar el marcador pastel en la región de interés (ROI) correspondiente
+                pastel_marker.copyTo(roi);
+            }
+
+            // Crear la carpeta patterns si no existe
+            if (!std::filesystem::exists("patterns")) {
+                std::filesystem::create_directory("patterns");
+            }
+
+            // Guardar la imagen combinada con los cuatro marcadores
+            std::string filename = "patterns/four_markers.png";
+            cv::imwrite(filename, combined_image);
+        }
 };
