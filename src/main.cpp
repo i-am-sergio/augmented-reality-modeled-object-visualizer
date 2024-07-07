@@ -22,7 +22,8 @@ int main(){
     loadAndAddModel("models/wolf.obj", 0.0004f, objects);
     loadAndAddModel("models/rat.obj", 0.004f, objects);
     loadAndAddModel("models/fox.obj", 0.002f, objects);
-    loadAndAddModel("models/pegasus.obj", 0.05f, objects, 0, 0, 0);
+    loadAndAddModel("models/pegasus.obj", 0.08f, objects, 0, 0, 0);
+    loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
 
     // Load camera
     LoadCamera camera(objects);
