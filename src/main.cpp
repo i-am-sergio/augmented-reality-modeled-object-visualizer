@@ -15,8 +15,14 @@ int main(){
         return -1;
     }
 
-    // ObjectProjection objProjection(obj.getVertices(), obj.getNormals(), obj.getTexCoords(), obj.getFaces());
-    camera.showCamera();
+    std::vector<cv::Point3f> vertices = obj.getVertices();
+    std::vector<cv::Point3f> normals = obj.getNormals();
+    std::vector<cv::Point2f> texCoords = obj.getTexCoords();
+    std::vector<Face> faces = obj.getFaces();
+
+    ObjectProjection object(vertices, normals, texCoords, faces);
+
+    camera.showCamera(object);
 
     return 0;
 }

@@ -98,7 +98,7 @@ class LoadCamera {
             return cap.isOpened();
         }
 
-        void showCamera(){
+        void showCamera(ObjectProjection& objectProjection){
 
             while (true){
                 this->cap >> frame;
@@ -124,23 +124,25 @@ class LoadCamera {
                     std::vector<cv::Vec3d> rvecs, tvecs;
                     cv::aruco::estimatePoseSingleMarkers(markerCorners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-                    for (size_t i = 0; i < markerIDs.size(); i++){
-                        // Draw axis for each marker
-                        cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
+                    objectProjection.processFrame(frame, markerIDs, markerCorners, cameraMatrix, distCoeffs, markerLength);
 
-                        // Select the vertices based on the marker ID
-                        if (markerIDs[i] == 30) {
-                            auto vertices = getCubeVertices();
-                            std::vector<cv::Point2f> imgpts;
-                            cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-                            drawCube(frame, imgpts);
-                        } else if (markerIDs[i] == 35) {
-                            auto vertices = getPrismVertices();
-                            std::vector<cv::Point2f> imgpts;
-                            cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-                            drawPrism(frame, imgpts);
-                        }
-                    }
+                    // for (size_t i = 0; i < markerIDs.size(); i++){
+                    //     // Draw axis for each marker
+                    //     cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
+
+                    //     // Select the vertices based on the marker ID
+                    //     if (markerIDs[i] == 30) {
+                    //         auto vertices = getCubeVertices();
+                    //         std::vector<cv::Point2f> imgpts;
+                    //         cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
+                    //         drawCube(frame, imgpts);
+                    //     } else if (markerIDs[i] == 35) {
+                    //         auto vertices = getPrismVertices();
+                    //         std::vector<cv::Point2f> imgpts;
+                    //         cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
+                    //         drawPrism(frame, imgpts);
+                    //     }
+                    // }
                 }
 
                 cv::imshow("Camera", frame);

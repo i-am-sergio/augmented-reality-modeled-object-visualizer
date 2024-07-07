@@ -24,12 +24,12 @@ public:
     }
 
     void drawObject(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
-        // Draw the vertices as points
+        // Dibujar los vértices como puntos
         for (const auto& pt : imgpts) {
             cv::circle(frame, pt, 3, cv::Scalar(0, 0, 255), -1);
         }
 
-        // Draw the faces
+        // Dibujar las caras
         for (const auto& face : faces) {
             std::vector<cv::Point> points;
             for (const auto& vertex : face.vertices) {
