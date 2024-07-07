@@ -61,7 +61,7 @@ class PatternsGenerator {
             this->imgSize = imgSize;
             this->markerSize = markerSize;
             this->markerIds = ids;
-            this->arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50));
+            this->arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(dictionaryId));
         }
 
         void generateMarkers() {
