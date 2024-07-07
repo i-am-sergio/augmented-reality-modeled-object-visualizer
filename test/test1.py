@@ -97,21 +97,27 @@ while True:
             # Draw axis for each marker
             cv.drawFrameAxes(frame, camera_matrix, dist_coeffs, rvecs[i], tvecs[i], 0.1)
             
-            # Select the vertices based on the marker ID
-            if ids[i] == 25:
-                vertices = CUBE_VERTICES
-                draw_shape = draw_cube
-            elif ids[i] == 30:
-                vertices = PRISMA_VERTICES
-                draw_shape = draw_prism
-            else:
-                continue  # Skip drawing if it's not 25 or 30
+            print('len marker ids:', len(ids))
+            print('rvecs:', rvecs)
+            print('tvecs:', tvecs)
+            print('ids:', ids)
+            print('=====')
+
+            # # Select the vertices based on the marker ID
+            # if ids[i] == 25:
+            #     vertices = CUBE_VERTICES
+            #     draw_shape = draw_cube
+            # elif ids[i] == 30:
+            #     vertices = PRISMA_VERTICES
+            #     draw_shape = draw_prism
+            # else:
+            #     continue  # Skip drawing if it's not 25 or 30
             
-            # Project 3D points to image plane
-            imgpts, _ = cv.projectPoints(vertices, rvecs[i], tvecs[i], camera_matrix, dist_coeffs)
+            # # Project 3D points to image plane
+            # imgpts, _ = cv.projectPoints(vertices, rvecs[i], tvecs[i], camera_matrix, dist_coeffs)
             
-            # Draw the shape (cube or prism)
-            frame = draw_shape(frame, imgpts)
+            # # Draw the shape (cube or prism)
+            # frame = draw_shape(frame, imgpts)
 
     cv.imshow('frame', frame)
     if cv.waitKey(1) & 0xFF == ord('q'):
