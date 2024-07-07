@@ -23,13 +23,17 @@ public:
         this->faces = faces;
     }
 
-    void drawObject(cv::Mat& frame, const cv::Vec3d& rvec, const cv::Vec3d& tvec, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs) {
+    void drawObject(cv::Mat& frame, const cv::Vec3d& rvec, const cv::Vec3d& tvec, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs,double movement = 0.0) {
+        // Ajustar la posición en el eje Z
+        cv::Vec3d adjusted_tvec = tvec + cv::Vec3d(0, 0, movement);
+        
         // Proyectar los vértices del objeto
         std::vector<cv::Point2f> imgpts;
-        cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
+        cv::projectPoints(vertices, rvec, adjusted_tvec, cameraMatrix, distCoeffs, imgpts);
+        
         // Dibujar los vértices como puntos
         for (const auto& pt : imgpts) {
-            cv::circle(frame, pt, 3, cv::Scalar(0, 0, 255), -1);
+            cv::circle(frame, pt, 3, cv::Scalar(22, 21, 250), -1);
         }
 
         // Dibujar las caras
@@ -38,7 +42,11 @@ public:
             for (const auto& vertex : face.vertices) {
                 points.push_back(imgpts[vertex - 1]);
             }
-            cv::polylines(frame, points, true, cv::Scalar(255, 255, 0), 2);
+            // cv::polylines(frame, points, true, cv::Scalar(255, 255, 0), 2);
+            // Dibujar el polígono sólido
+            // cv::fillPoly(frame, std::vector<std::vector<cv::Point>>{points}, cv::Scalar(255, 179, 153)); // Color en formato BGR
+            // Use fillConvexPoly to fill the polygon
+            cv::fillConvexPoly(frame, points, cv::Scalar(255, 179, 153)); // Color en formato BGR
         }
     }
 
