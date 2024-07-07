@@ -27,8 +27,8 @@ marker_length = 0.05
 # Load 3D model from OBJ file
 scale_factor = 0.005
 dir_name = os.getcwd()
-# obj = OBJ(os.path.join(dir_name, 'models/rat.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=scale_factor)
 obj = OBJ(os.path.join(dir_name, 'models/wolf.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=0.0002)
+# obj = OBJ(os.path.join(dir_name, 'models/rat.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=scale_factor)
 # obj = OBJ(os.path.join(dir_name, 'models/fox.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=0.0015)
 # obj = OBJ(os.path.join(dir_name, 'models/chair.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=0.004)
 # obj = OBJ(os.path.join(dir_name, 'models/sheet.obj'), swapyz=True, dz=0.15, marker_length=marker_length,scale_factor=0.015)

@@ -23,7 +23,10 @@ public:
         this->faces = faces;
     }
 
-    void drawObject(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
+    void drawObject(cv::Mat& frame, const cv::Vec3d& rvec, const cv::Vec3d& tvec, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs) {
+        // Proyectar los vértices del objeto
+        std::vector<cv::Point2f> imgpts;
+        cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
         // Dibujar los vértices como puntos
         for (const auto& pt : imgpts) {
             cv::circle(frame, pt, 3, cv::Scalar(0, 0, 255), -1);
@@ -39,22 +42,22 @@ public:
         }
     }
 
-    void processFrame(cv::Mat& frame, const std::vector<int>& ids, const std::vector<std::vector<cv::Point2f>>& corners, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs, float markerLength) {
-        if (ids.empty()) return;
+    // void processFrame(cv::Mat& frame, const std::vector<int>& ids, const std::vector<std::vector<cv::Point2f>>& corners, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs, float markerLength) {
+    //     if (ids.empty()) return;
 
-        cv::aruco::drawDetectedMarkers(frame, corners, ids);
+    //     // cv::aruco::drawDetectedMarkers(frame, corners, ids);
 
-        std::vector<cv::Vec3d> rvecs, tvecs;
-        cv::aruco::estimatePoseSingleMarkers(corners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
+    //     // std::vector<cv::Vec3d> rvecs, tvecs;
+    //     // cv::aruco::estimatePoseSingleMarkers(corners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
 
-        for (size_t i = 0; i < ids.size(); ++i) {
-            cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
+    //     // for (size_t i = 0; i < ids.size(); ++i) {
+    //         // cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
-            if (ids[i] == 35) {
-                std::vector<cv::Point2f> imgpts;
-                cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-                drawObject(frame, imgpts);
-            }
-        }
-    }
+    //         if (ids[i] == 35) {
+    //             std::vector<cv::Point2f> imgpts;
+    //             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
+    //             drawObject(frame, imgpts);
+    //         }
+    //     // }
+    // }
 };
