@@ -25,7 +25,7 @@ std::vector<cv::Point3f> getPrismVertices() {
     };
 }
 
-void drawCube(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
+void drawShape(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
     // Ensure imgpts size is correct
     if (imgpts.size() != 8) return;
 
@@ -46,28 +46,6 @@ void drawCube(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
     cv::drawContours(frame, contours, 1, cv::Scalar(0, 0, 255), 3, cv::LINE_AA);
 }
 
-void drawPrism(cv::Mat& frame, const std::vector<cv::Point2f>& imgpts) {
-    // Ensure imgpts size is correct
-    if (imgpts.size() != 8) return;
-
-    // Define contours for the prism
-    std::vector<std::vector<cv::Point>> contours;
-    contours.push_back(std::vector<cv::Point>(imgpts.begin(), imgpts.begin() + 4));
-    contours.push_back(std::vector<cv::Point>(imgpts.begin() + 4, imgpts.end()));
-
-    // Draw ground floor in yellow
-    cv::drawContours(frame, contours, 0, cv::Scalar(0, 255, 255), 3, cv::LINE_AA);
-
-    // Draw pillars in cyan
-    for (int i = 0; i < 4; ++i) {
-        cv::line(frame, imgpts[i], imgpts[i + 4], cv::Scalar(255, 255, 0), 3, cv::LINE_AA);
-    }
-
-    // Draw top layer in magenta
-    cv::drawContours(frame, contours, 1, cv::Scalar(255, 0, 255), 3, cv::LINE_AA);
-}
-
-
 class LoadCamera {
     private: 
         cv::VideoCapture cap;
@@ -79,6 +57,11 @@ class LoadCamera {
         cv::Ptr<cv::aruco::DetectorParameters> detectorParams;
         vector<ObjectProjection> objectsProjections;
 
+        // Mouse state
+        bool isDragging = false;
+        cv::Point lastMousePos;
+        cv::Vec3d rotation;
+
     public:
         LoadCamera(vector<ObjectProjection>& objectsProjections){
             // Objects projections
@@ -89,6 +72,8 @@ class LoadCamera {
             this->arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50));
             this->detectorParams = new cv::aruco::DetectorParameters();
             this->markerLength = 0.1f;
+            // Default rotation
+            this->rotation = cv::Vec3d(0, 0, 0);
         }
 
         ~LoadCamera(){
@@ -103,8 +88,11 @@ class LoadCamera {
         }
 
         void showCamera(){
-            double movement = 0.0;  // Variable para controlar el movimiento en el eje Z
-            bool move_up = true;    // Variable para controlar la dirección del movimiento
+            cv::namedWindow("Camera");
+            cv::setMouseCallback("Camera", onMouse, this);
+            
+            // double movement = 0.0;  // Variable para controlar el movimiento en el eje Z
+            // bool move_up = true;    // Variable para controlar la dirección del movimiento
 
             while (true){
                 this->cap >> frame;
@@ -137,48 +125,52 @@ class LoadCamera {
                         // Select the vertices based on the marker ID
                         if (markerIDs[i] == 11) 
                         {
-                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            //objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
                         } 
                         else if (markerIDs[i] == 12) 
                         {
-                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            //objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
                         } 
                         else if (markerIDs[i] == 13) 
                         {
-                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            // objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
                         }
                         else if (markerIDs[i] == 14) 
                         {
-                            objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            // objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
                         }
                         else if (markerIDs[i] == 40) 
                         {
                             auto vertices = getCubeVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-                            drawCube(frame, imgpts);
+                            drawShape(frame, imgpts);
                         } 
                         else if (markerIDs[i] == 41) 
                         {
                             auto vertices = getPrismVertices();
                             std::vector<cv::Point2f> imgpts;
                             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-                            drawPrism(frame, imgpts);
+                            drawShape(frame, imgpts);
                         }
                     }
 
-                    // Controlar la animación del movimiento en el eje Z
-                    if (move_up) {
-                        movement += 0.01;  // Incrementar movimiento hacia arriba
-                        if (movement >= 0.1) {
-                            move_up = false;  // Cambiar dirección al alcanzar el límite superior
-                        }
-                    } else {
-                        movement -= 0.01;  // Decrementar movimiento hacia abajo
-                        if (movement <= -0.1) {
-                            move_up = true;  // Cambiar dirección al alcanzar el límite inferior
-                        }
-                    }
+                    // // Controlar la animación del movimiento en el eje Z
+                    // if (move_up) {
+                    //     movement += 0.01;  // Incrementar movimiento hacia arriba
+                    //     if (movement >= 0.1) {
+                    //         move_up = false;  // Cambiar dirección al alcanzar el límite superior
+                    //     }
+                    // } else {
+                    //     movement -= 0.01;  // Decrementar movimiento hacia abajo
+                    //     if (movement <= -0.1) {
+                    //         move_up = true;  // Cambiar dirección al alcanzar el límite inferior
+                    //     }
+                    // }
                 }
 
                 cv::imshow("Camera", frame);
@@ -193,5 +185,21 @@ class LoadCamera {
                 }
             }
 
+        }
+
+        static void onMouse(int event, int x, int y, int, void* userdata) {
+            LoadCamera* self = static_cast<LoadCamera*>(userdata);
+            if (event == cv::EVENT_LBUTTONDOWN) {
+                self->isDragging = true;
+                self->lastMousePos = cv::Point(x, y);
+            } else if (event == cv::EVENT_MOUSEMOVE && self->isDragging) {
+                cv::Point currentMousePos(x, y);
+                cv::Point delta = currentMousePos - self->lastMousePos;
+                self->rotation[0] += delta.y * 0.01;  // Rotación en el eje X
+                self->rotation[1] += delta.x * 0.01;  // Rotación en el eje Y
+                self->lastMousePos = currentMousePos;
+            } else if (event == cv::EVENT_LBUTTONUP) {
+                self->isDragging = false;
+            }
         }
 };
