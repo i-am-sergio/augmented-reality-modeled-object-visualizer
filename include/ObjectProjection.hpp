@@ -50,22 +50,24 @@ public:
         }
     }
 
-    // void processFrame(cv::Mat& frame, const std::vector<int>& ids, const std::vector<std::vector<cv::Point2f>>& corners, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs, float markerLength) {
-    //     if (ids.empty()) return;
+    void drawObject(cv::Mat& image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat& cameraMatrix, const cv::Mat& distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0)) {
+        cv::Mat rmat;
+        cv::Rodrigues(rvec, rmat);
 
-    //     // cv::aruco::drawDetectedMarkers(frame, corners, ids);
+        // Apply additional rotation
+        cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
+        cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]), 0, 1, 0, -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
 
-    //     // std::vector<cv::Vec3d> rvecs, tvecs;
-    //     // cv::aruco::estimatePoseSingleMarkers(corners, markerLength, cameraMatrix, distCoeffs, rvecs, tvecs);
+        rmat = rmat * addRotX * addRotY;
 
-    //     // for (size_t i = 0; i < ids.size(); ++i) {
-    //         // cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
+        cv::Rodrigues(rmat, rvec);
 
-    //         if (ids[i] == 35) {
-    //             std::vector<cv::Point2f> imgpts;
-    //             cv::projectPoints(vertices, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, imgpts);
-    //             drawObject(frame, imgpts);
-    //         }
-    //     // }
-    // }
+        // Draw points
+        std::vector<cv::Point2f> imgpts;
+        cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
+        for (const auto& pt : imgpts) {
+            cv::circle(image, pt, 3, cv::Scalar(22, 21, 250), -1);
+        }
+    }
+
 };
