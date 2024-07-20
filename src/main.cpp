@@ -22,10 +22,10 @@ int main()
     // Load 3D models
     vector<ObjectProjection> objects;
     loadAndAddModel("models/wolf.obj", 0.0004f, objects, 0.15f);
-    loadAndAddModel("models/rat.obj", 0.004f, objects, 0.12f);
+    loadAndAddModel("models/rat.obj", 0.004f, objects, 0.1f);
     loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
-    loadAndAddModel("models/sphere10000.obj", 0.08f, objects, 0.9f);
-    loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
+    loadAndAddModel("models/sphere10000.obj", 0.002f, objects, 0.2f);
+    //loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
 
     // Load camera
     LoadCamera camera(objects);
