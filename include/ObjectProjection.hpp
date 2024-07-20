@@ -3,10 +3,12 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 #include "Load3DModel.hpp"
+#include "Delaunay.hpp"
 #include <vector>
 
 using namespace cv;
 using namespace std;
+using namespace delaunay;
 
 class ObjectProjection {
 private:
@@ -62,11 +64,37 @@ public:
 
         cv::Rodrigues(rmat, rvec);
 
-        // Draw points
+        // Project vertices
         std::vector<cv::Point2f> imgpts;
         cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
+
+
+        // Generate Mesh ...
+        std::vector<delaunay::Point<float>> delaunayPoints;
         for (const auto& pt : imgpts) {
-            cv::circle(image, pt, 3, cv::Scalar(22, 21, 250), -1);
+            delaunayPoints.emplace_back(pt.x, pt.y);
+        }
+
+        // Perform Delaunay triangulation
+        auto triangulation = triangulate(delaunayPoints);
+
+
+        // Draw vertices as points 2D
+        for (const auto& pt : imgpts) {
+            cv::circle(image, pt, 2, cv::Scalar(22, 21, 250), -1);
+        }
+
+        // Draw edges from triangulation
+        for (const auto& e : triangulation.edges) {
+            cv::line(image, cv::Point(e.p0.x, e.p0.y), cv::Point(e.p1.x, e.p1.y), cv::Scalar(193, 107, 255), 1);
+        }
+    }
+
+    protected: 
+    void printPoints2f(const std::vector<cv::Point2f>& points) {
+        int contador = 0;
+        for (const auto& point : points) {
+            std::cout << ++contador << point << std::endl;
         }
     }
 
