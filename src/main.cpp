@@ -3,6 +3,8 @@
 #include "LoadCamera.hpp"
 #include "Load3DModel.hpp"
 #include "ObjectProjection.hpp"
+#include "Decimation.hpp"
+#include "KMeansReduction.hpp"
 
 using namespace std;
 
@@ -13,9 +15,29 @@ void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjectio
     vector<cv::Point3f> normals = model.getNormals();
     vector<cv::Point2f> texCoords = model.getTexCoords();
     vector<Face> faces = model.getFaces();
+    cout<<"########################"<<endl;
+    cout<<"N de Vertices: "<<vertices.size()<<endl;
+    cout<<"N de Normals: "<<normals.size()<<endl;
+    cout<<"N de TextCoords: "<<texCoords.size()<<endl;
+    cout<<"N de Faces: "<<faces.size()<<endl;
+    // Solo aplicar decimation si hay vértices
+    if (!vertices.empty()) {
+        Decimation decimation(vertices, normals, texCoords, faces);
+        decimation.applyDecimation(0.5f); // Reducir al 50% (ajusta según sea necesario)
+        vertices = decimation.getVertices();
+        normals = decimation.getNormals();
+        texCoords = decimation.getTexCoords();
+        faces = decimation.getFaces();
+    }
+    cout<<"---------------------------"<<endl;
+    cout<<"Reduction N de Vertices: "<<vertices.size()<<endl;
+    cout<<"Reduction N de Normals: "<<normals.size()<<endl;
+    cout<<"Reduction N de TextCoords: "<<texCoords.size()<<endl;
+    cout<<"Reduction N de Faces: "<<faces.size()<<endl;
     ObjectProjection object(vertices, normals, texCoords, faces, max);
     objects.push_back(object);
 }
+
 
 int main()
 {
