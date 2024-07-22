@@ -21,13 +21,21 @@ void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjectio
     cout<<"N de TextCoords: "<<texCoords.size()<<endl;
     cout<<"N de Faces: "<<faces.size()<<endl;
     // Solo aplicar decimation si hay vértices
+    //if (!vertices.empty()) {
+    //    Decimation decimation(vertices, normals, texCoords, faces);
+    //    decimation.applyDecimation(0.5f); // Reducir al 50% (ajusta según sea necesario)
+    //    vertices = decimation.getVertices();
+    //    normals = decimation.getNormals();
+    //    texCoords = decimation.getTexCoords();
+    //    faces = decimation.getFaces();
+    //}
     if (!vertices.empty()) {
-        Decimation decimation(vertices, normals, texCoords, faces);
-        decimation.applyDecimation(0.5f); // Reducir al 50% (ajusta según sea necesario)
-        vertices = decimation.getVertices();
-        normals = decimation.getNormals();
-        texCoords = decimation.getTexCoords();
-        faces = decimation.getFaces();
+        KMeansReduction kmeansReduction(vertices, normals, texCoords, faces);
+        kmeansReduction.applyReduction(0.5f); // Reducir al 50% (ajusta según sea necesario)
+        vertices = kmeansReduction.getVertices();
+        normals = kmeansReduction.getNormals();
+        texCoords = kmeansReduction.getTexCoords();
+        faces = kmeansReduction.getFaces();
     }
     cout<<"---------------------------"<<endl;
     cout<<"Reduction N de Vertices: "<<vertices.size()<<endl;
