@@ -22,6 +22,11 @@ set(GENERATE_SOURCES
     src/generate.cpp
 )
 
+# Add source files for Mesh
+set(MESH_SOURCES
+    src/mesh.cpp
+)
+
 # Copy folder models to build directory
 file(COPY models DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -31,7 +36,12 @@ add_executable(ARProject ${ARPROJECT_SOURCES})
 # Generate executable for GenerateMarkers
 add_executable(GenerateMarkers ${GENERATE_SOURCES})
 
+# Generate executable for Mesh
+add_executable(Mesh ${MESH_SOURCES})
+
 # Link libraries
 target_link_libraries(ARProject ${OpenCV_LIBS})
 # Link libraries to GenerateMarkers
 target_link_libraries(GenerateMarkers ${OpenCV_LIBS})
+# Link libraries to Mesh
+target_link_libraries(Mesh ${OpenCV_LIBS})
