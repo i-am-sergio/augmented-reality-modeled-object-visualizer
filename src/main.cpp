@@ -8,7 +8,7 @@
 
 using namespace std;
 
-void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
+void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
 {
     Load3DModel model(modelPath, true, 0, 0, 0.15f, 0.05, scaleFactor);
     vector<cv::Point3f> vertices = model.getVertices();
@@ -31,7 +31,7 @@ void loadAndAddModel(string modelPath, float scaleFactor, vector<ObjectProjectio
     //}
     if (!vertices.empty()) {
         KMeansReduction kmeansReduction(vertices, normals, texCoords, faces);
-        kmeansReduction.applyReduction(0.5f); // Reducir al 50% (ajusta según sea necesario)
+        kmeansReduction.applyReduction(reductionFactor); // Reducir al 50% (ajusta según sea necesario)
         vertices = kmeansReduction.getVertices();
         normals = kmeansReduction.getNormals();
         texCoords = kmeansReduction.getTexCoords();
@@ -51,10 +51,11 @@ int main()
 {
     // Load 3D models
     vector<ObjectProjection> objects;
-    loadAndAddModel("models/wolf.obj", 0.0004f, objects, 0.15f);
-    loadAndAddModel("models/rat.obj", 0.004f, objects, 0.1f);
-    loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
-    loadAndAddModel("models/sphere10000.obj", 0.002f, objects, 0.2f);
+    loadAndAddModel("models/wolf.obj", 0.0004f,0.5f, objects, 0.15f);
+    loadAndAddModel("models/rat.obj", 0.004f, 0.5f, objects, 0.1f);
+    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
+    //loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
+    loadAndAddModel("models/sphere10000.obj", 0.002f, 0.5f, objects, 0.2f);
     //loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
 
     // Load camera
