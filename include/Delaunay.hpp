@@ -1,7 +1,3 @@
-/* 
- * Bowyer-Watson algorithm
- * C++ implementation of http://paulbourke.net/papers/triangulate .
- **/
 #pragma once
 
 #include <algorithm>
@@ -200,4 +196,4 @@ Delaunay<T> triangulate(const std::vector<Point<T>>& points)
   return d;
 }
 
-} /* namespace delaunay */
+}
