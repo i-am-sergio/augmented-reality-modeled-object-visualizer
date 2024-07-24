@@ -29,15 +29,30 @@ using namespace std;
 using namespace delaunay;
 using namespace delaunay3D;
 
-double calculateDistance(const cv::Point &p1, const cv::Point &p2)
+double euclideanDistance(const cv::Point3f &p1, const cv::Point3f &p2)
 {
-    return std::hypot(p2.x - p1.x, p2.y - p1.y);
+    return std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2) + std::pow(p1.z - p2.z, 2));
+}
+
+double distance(const cv::Point3f &p1, const cv::Point3f &p2)
+{
+    return std::sqrt(std::pow(p1.x - p2.x, 2) + std::pow(p1.y - p2.y, 2) + std::pow(p1.z - p2.z, 2));
 }
 struct Cara
 {
     std::vector<int> indices;
 };
-
+struct Point3fCompare
+{
+    bool operator()(const cv::Point3f &lhs, const cv::Point3f &rhs) const
+    {
+        if (lhs.x != rhs.x)
+            return lhs.x < rhs.x;
+        if (lhs.y != rhs.y)
+            return lhs.y < rhs.y;
+        return lhs.z < rhs.z;
+    }
+};
 void createCaras(const std::vector<delaunay3D::Point<float>> &vertices,
                  const delaunay3D::Delaunay3D<float> &delaunay,
                  std::vector<Cara> &caras)
@@ -98,28 +113,73 @@ public:
 
     void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
     {
+        // Convert rotation vector to rotation matrix
         cv::Mat rmat;
         cv::Rodrigues(rvec, rmat);
-
         cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
         cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]), 0, 1, 0, -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
 
         rmat = rmat * addRotX * addRotY;
-
         cv::Rodrigues(rmat, rvec);
 
-        std::vector<cv::Point2f> imgpts;
+        std::vector<cv::Point2f> imgpts(vertices.size());
+        std::vector<cv::Point3f> visibleVertices;
+        std::vector<cv::Point3f> notVisibleVertices;
+
+        // Project points
         cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
+
+        // Find the Z-coordinate range for coloring
+        double minZ = std::numeric_limits<double>::max();
+        double maxZ = std::numeric_limits<double>::lowest();
+
+        for (const auto &vertex : vertices)
+        {
+            if (vertex.z < minZ)
+                minZ = vertex.z;
+            if (vertex.z > maxZ)
+                maxZ = vertex.z;
+        }
+        double midpointZ = (minZ + maxZ) / 2.0;
+        // Draw points and classify them
+        for (size_t i = 0; i < vertices.size(); ++i)
+        {
+            const auto &pt = imgpts[i];
+            const auto &vertex = vertices[i];
+            cv::Scalar color;
+            if (vertex.z >= midpointZ)
+            {
+                color = cv::Scalar(0, 255, 0); // Green for points above the midpoint
+                visibleVertices.push_back(vertex);
+            }
+            else
+            {
+                color = cv::Scalar(255, 0, 255); // Purple for points below the midpoint
+                notVisibleVertices.push_back(vertex);
+            }
+            cv::circle(image, pt, 2, color, -1);
+        }
 
         std::vector<delaunay3D::Point<float>> verticesNew;
         for (const auto &pt : vertices)
-        {
             verticesNew.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
-        }
-        auto delaunay = triangulates(verticesNew);
 
-        std::vector<Cara> caras;
+        std::vector<delaunay3D::Point<float>> verticesNewVisible;
+        for (const auto &pt : visibleVertices)
+            verticesNewVisible.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
+
+        std::vector<delaunay3D::Point<float>> verticesNewNotVisible;
+        for (const auto &pt : notVisibleVertices)
+            verticesNewNotVisible.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
+
+        auto delaunay = triangulates(verticesNewVisible);
+        auto delaunayNotVisible = triangulates(verticesNewNotVisible);
+
+        std::vector<Cara> caras, carasNotVisible;
         createCaras(verticesNew, delaunay, caras);
+        createCaras(verticesNew, delaunayNotVisible, carasNotVisible);
+
+        // Draw the triangles for visible vertices
         for (const auto &cara : caras)
         {
             std::vector<cv::Point> points;
@@ -127,7 +187,20 @@ public:
             {
                 points.push_back(imgpts[index]);
             }
-            cv::fillConvexPoly(image, points, cv::Scalar(255, 179, 153));
+            cv::polylines(image, points, true, cv::Scalar(0, 255, 0), 1); // Green for visible triangles
+            // cv::fillConvexPoly(image, points, cv::Scalar(0, 255, 0), cv::LINE_AA); // Fill visible triangles
+        }
+
+        // Draw the triangles for not visible vertices
+        for (const auto &cara : carasNotVisible)
+        {
+            std::vector<cv::Point> points;
+            for (const auto &index : cara.indices)
+            {
+                points.push_back(imgpts[index]);
+            }
+            cv::polylines(image, points, true, cv::Scalar(255, 0, 255), 1); // Purple for not visible triangles
+            // cv::fillConvexPoly(image, points, cv::Scalar(255, 0, 255), cv::LINE_AA); // Fill not visible triangles
         }
     }
 
