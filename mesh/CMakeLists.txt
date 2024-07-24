@@ -14,21 +14,21 @@ endif()
 find_package(OpenCV REQUIRED)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
+# Find GMP
+find_package(GMP REQUIRED)
+include_directories(${GMP_INCLUDE_DIRS})
+
+# Find CGAL
+find_package(CGAL REQUIRED)
+include_directories(${CGAL_INCLUDE_DIRS})
+
 # Find OpenGL, GLEW, GLFW, and GLUT
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(glfw3 REQUIRED)
 
-# Find CGAL
-find_package(CGAL REQUIRED)
-include_directories(${CGAL_INCLUDE_DIRS})
 
-# Find Eigen
-find_path(EIGEN3_INCLUDE_DIR NAMES Eigen/Dense
-    PATHS /usr/include/eigen3
-    NO_DEFAULT_PATH
-)
 
 if(NOT EIGEN3_INCLUDE_DIR)
     message(FATAL_ERROR "Eigen3 not found. Please install Eigen3 or adjust the path in CMakeLists.txt")
