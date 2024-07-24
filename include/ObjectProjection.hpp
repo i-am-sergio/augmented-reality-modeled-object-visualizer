@@ -4,15 +4,60 @@
 #include <opencv2/aruco.hpp>
 #include "Load3DModel.hpp"
 #include "Delaunay.hpp"
+#include "Delaunay3D.hpp"
 #include <vector>
 #include <cmath>
+#include <unordered_map>
+#include <functional>
+
+namespace std
+{
+    template <typename T>
+    struct hash<delaunay3D::Point<T>>
+    {
+        std::size_t operator()(const delaunay3D::Point<T> &p) const
+        {
+            auto h1 = std::hash<T>{}(p.x);
+            auto h2 = std::hash<T>{}(p.y);
+            auto h3 = std::hash<T>{}(p.z);
+            return h1 ^ (h2 << 1) ^ (h3 << 2); // Combine hash values
+        }
+    };
+}
 using namespace cv;
 using namespace std;
 using namespace delaunay;
+using namespace delaunay3D;
 
 double calculateDistance(const cv::Point &p1, const cv::Point &p2)
 {
     return std::hypot(p2.x - p1.x, p2.y - p1.y);
+}
+struct Cara
+{
+    std::vector<int> indices;
+};
+
+void createCaras(const std::vector<delaunay3D::Point<float>> &vertices,
+                 const delaunay3D::Delaunay3D<float> &delaunay,
+                 std::vector<Cara> &caras)
+{
+    // Mapea los puntos a sus índices
+    std::unordered_map<delaunay3D::Point<float>, int> pointIndexMap;
+    for (int i = 0; i < vertices.size(); ++i)
+    {
+        pointIndexMap[vertices[i]] = i;
+    }
+
+    // Llena la lista de Cara con los índices de los vértices de los triángulos
+    for (const auto &triangle : delaunay.triangles)
+    {
+        Cara cara;
+        cara.indices.push_back(pointIndexMap[triangle.p0]);
+        cara.indices.push_back(pointIndexMap[triangle.p1]);
+        cara.indices.push_back(pointIndexMap[triangle.p2]);
+        caras.push_back(cara);
+    }
 }
 
 class ObjectProjection
@@ -66,39 +111,23 @@ public:
         std::vector<cv::Point2f> imgpts;
         cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
 
-        std::vector<delaunay::Point<float>> delaunayPoints;
-        for (const auto &pt : imgpts)
+        std::vector<delaunay3D::Point<float>> verticesNew;
+        for (const auto &pt : vertices)
         {
-            delaunayPoints.emplace_back(pt.x, pt.y);
+            verticesNew.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
         }
+        auto delaunay = triangulates(verticesNew);
 
-        auto triangulation = triangulate(delaunayPoints);
-
-        for (const auto &pt : imgpts)
+        std::vector<Cara> caras;
+        createCaras(verticesNew, delaunay, caras);
+        for (const auto &cara : caras)
         {
-            cv::circle(image, pt, 2, cv::Scalar(22, 21, 250), -1);
-        }
-
-        double maxDistance = 0.0;
-
-        for (const auto &e : triangulation.edges)
-        {
-            double distance = calculateDistance(cv::Point(e.p0.x, e.p0.y), cv::Point(e.p1.x, e.p1.y));
-            if (distance > maxDistance)
+            std::vector<cv::Point> points;
+            for (const auto &index : cara.indices)
             {
-                maxDistance = distance;
+                points.push_back(imgpts[index]);
             }
-        }
-
-        double maxDistanceThreshold = maxDistance * maxDistancePercentage;
-
-        for (const auto &e : triangulation.edges)
-        {
-            double distance = calculateDistance(cv::Point(e.p0.x, e.p0.y), cv::Point(e.p1.x, e.p1.y));
-            if (distance <= maxDistanceThreshold)
-            {
-                cv::line(image, cv::Point(e.p0.x, e.p0.y), cv::Point(e.p1.x, e.p1.y), cv::Scalar(193, 107, 255), 1);
-            }
+            cv::fillConvexPoly(image, points, cv::Scalar(255, 179, 153));
         }
     }
 
