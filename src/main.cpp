@@ -57,7 +57,7 @@ int main()
     vector<ObjectProjection> objects;
     loadAndAddModel("models/wolf.obj", 0.0004f, 0.5f, objects, 0.15f);
     loadAndAddModel("models/rat.obj", 0.004f, 0.5f, objects, 0.1f);
-    loadAndAddModel("models/Corona.obj", 0.010f, 0.5f, objects, 0.9f);
+    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
     loadAndAddModel("models/sphere10000.obj", 0.002f, 0.5f, objects, 0.2f);
     // loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
