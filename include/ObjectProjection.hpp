@@ -9,7 +9,10 @@
 #include <cmath>
 #include <unordered_map>
 #include <functional>
-
+struct CaraNew
+{
+    std::vector<int> indices; // Lista de índices de los vértices
+};
 namespace std
 {
     template <typename T>
@@ -82,11 +85,14 @@ private:
     std::vector<cv::Point3f> normals;
     std::vector<cv::Point2f> texCoords;
     std::vector<Face> faces;
+    std::vector<CaraNew> caras;
     float maxDistancePercentage;
 
 public:
     ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<Face> &faces, float maxDistancePercentage)
         : vertices(vertices), normals(normals), texCoords(texCoords), faces(faces), maxDistancePercentage(maxDistancePercentage) {}
+    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<CaraNew> &carass, float maxDistancePercentage)
+        : vertices(vertices), normals(normals), texCoords(texCoords), caras(carass), maxDistancePercentage(maxDistancePercentage) {}
 
     void drawObject(cv::Mat &frame, const cv::Vec3d &rvec, const cv::Vec3d &tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, double movement = 0.0)
     {
@@ -110,8 +116,80 @@ public:
             cv::fillConvexPoly(frame, points, cv::Scalar(255, 179, 153));
         }
     }
-
     void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
+    {
+        // Convert rotation vector to rotation matrix
+        cv::Mat rmat;
+        cv::Rodrigues(rvec, rmat);
+        cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
+        cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]), 0, 1, 0, -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
+
+        rmat = rmat * addRotX * addRotY;
+
+        // Calculate light position in object space
+        cv::Mat lightMat = rmat.inv();              // Get the inverse of the rotation matrix
+        cv::Point3f lightSourcePosition(0, 0, 0.4); // Light source position in object space
+        cv::Point3f lightPos = cv::Point3f(lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
+                                           lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
+                                           lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
+
+        // Project light position onto the image plane
+        std::vector<cv::Point2f> lightSourceImgPts;
+        cv::projectPoints(std::vector<cv::Point3f>{lightPos}, rvec, tvec, cameraMatrix, distCoeffs, lightSourceImgPts);
+
+        // Project points
+        std::vector<cv::Point2f> imgpts(vertices.size());
+        cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
+        // Draw the light source on the image
+
+        auto calculateIllumination = [&](const cv::Point3f &p0, const cv::Point3f &p1, const cv::Point3f &p2, const cv::Point3f &lightPos)
+        {
+            // Calculate the normal of the triangle
+            cv::Point3f edge1 = p1 - p0;
+            cv::Point3f edge2 = p2 - p0;
+            cv::Point3f normal = edge1.cross(edge2);
+            double normLength = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+            normal /= normLength; // Normalize the normal
+
+            // Calculate the light direction vector from the light position
+            cv::Point3f centroid = (p0 + p1 + p2) / 3.0;
+            cv::Point3f lightDir = lightPos - centroid;
+            double lightDirLength = std::sqrt(lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z);
+            lightDir /= lightDirLength; // Normalize the light direction
+
+            // Calculate the dot product with the light direction
+            double dotProduct = normal.dot(lightDir);
+
+            // Clamp the dot product to be between 0 and 1
+            double intensity = std::max(0.0, std::min(1.0, dotProduct));
+
+            return intensity;
+        };
+
+        for (const auto &pt : imgpts)
+        {
+            cv::circle(image, pt, 2, cv::Scalar(0, 255, 0), -1);
+        }
+        for (const auto &pt : lightSourceImgPts)
+        {
+            cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
+        }
+
+        for (const auto &cara : caras)
+        {
+            std::vector<cv::Point> points;
+            for (const auto &index : cara.indices)
+            {
+                points.push_back(imgpts[index]);
+            }
+            double intensity = calculateIllumination(vertices[cara.indices[0]], vertices[cara.indices[1]], vertices[cara.indices[2]], lightPos);
+            cv::Scalar fillColor = cv::Scalar(0, 255, 0) * intensity;
+            cv::polylines(image, points, true, fillColor, 1);
+            cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
+        }
+    }
+
+    /*void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
     {
         // Convert rotation vector to rotation matrix
         cv::Mat rmat;
@@ -294,44 +372,43 @@ public:
             }
         }
         */
-        /*
-        std::vector<delaunay3D::Point<float>> verticesNewVisibleExtremes;
-        for (const auto &pt : VisibleExtremes)
-            verticesNewVisibleExtremes.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
-        std::vector<delaunay3D::Point<float>> verticesNewNotVisibleExtremes;
-        for (const auto &pt : notVisibleExtremes)
-            verticesNewNotVisibleExtremes.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
-        */
-        // auto delaunayVisibleExtremes = triangulatesXZ(verticesNewVisibleExtremes);
-        // auto delaunayNotVisibleExtremes = triangulatesXZ(verticesNewNotVisibleExtremes);
-        // createCaras(verticesNew, delaunayVisibleExtremes, carasVisibleExtremes);
-        // createCaras(verticesNew, delaunayNotVisibleExtremes, carasNotVisibleExtremes);
+    /*
+    std::vector<delaunay3D::Point<float>> verticesNewVisibleExtremes;
+    for (const auto &pt : VisibleExtremes)
+        verticesNewVisibleExtremes.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
+    std::vector<delaunay3D::Point<float>> verticesNewNotVisibleExtremes;
+    for (const auto &pt : notVisibleExtremes)
+        verticesNewNotVisibleExtremes.emplace_back(delaunay3D::Point<float>(pt.x, pt.y, pt.z));
+    */
+    // auto delaunayVisibleExtremes = triangulatesXZ(verticesNewVisibleExtremes);
+    // auto delaunayNotVisibleExtremes = triangulatesXZ(verticesNewNotVisibleExtremes);
+    // createCaras(verticesNew, delaunayVisibleExtremes, carasVisibleExtremes);
+    // createCaras(verticesNew, delaunayNotVisibleExtremes, carasNotVisibleExtremes);
 
-        // Draw the triangles for not visible vertices
+    // Draw the triangles for not visible vertices
 
-        /*
-        for (const auto &cara : carasVisibleExtremes)
+    /*
+    for (const auto &cara : carasVisibleExtremes)
+    {
+        std::vector<cv::Point> points;
+        for (const auto &index : cara.indices)
         {
-            std::vector<cv::Point> points;
-            for (const auto &index : cara.indices)
-            {
-                points.push_back(imgpts[index]);
-            }
-            cv::polylines(image, points, true, cv::Scalar(0, 255, 255), 1); // Cyan for visible extremes
-                                                                            // cv::fillConvexPoly(image, points, cv::Scalar(255, 0, 255), cv::LINE_AA); // Fill visible extremes
+            points.push_back(imgpts[index]);
         }
-
-        for (const auto &cara : carasNotVisibleExtremes)
-        {
-            std::vector<cv::Point> points;
-            for (const auto &index : cara.indices)
-            {
-                points.push_back(imgpts[index]);
-            }
-            cv::polylines(image, points, true, cv::Scalar(255, 255, 0), 1); // Yellow for not visible extremes
-            // cv::fillConvexPoly(image, points, cv::Scalar(0, 255, 0), cv::LINE_AA); // Fill not visible extremes
-        }*/
+        cv::polylines(image, points, true, cv::Scalar(0, 255, 255), 1); // Cyan for visible extremes
+                                                                        // cv::fillConvexPoly(image, points, cv::Scalar(255, 0, 255), cv::LINE_AA); // Fill visible extremes
     }
+
+    for (const auto &cara : carasNotVisibleExtremes)
+    {
+        std::vector<cv::Point> points;
+        for (const auto &index : cara.indices)
+        {
+            points.push_back(imgpts[index]);
+        }
+        cv::polylines(image, points, true, cv::Scalar(255, 255, 0), 1); // Yellow for not visible extremes
+        // cv::fillConvexPoly(image, points, cv::Scalar(0, 255, 0), cv::LINE_AA); // Fill not visible extremes
+    }*/
 
 protected:
     void printPoints2f(const std::vector<cv::Point2f> &points)
