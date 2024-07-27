@@ -152,58 +152,102 @@ public:
             lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
             lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
 
-        // Project light position onto the image plane
-        std::vector<cv::Point2f> lightSourceImgPts;
-        cv::projectPoints(std::vector<cv::Point3f>{lightPos}, rvec, tvec, cameraMatrix, distCoeffs, lightSourceImgPts);
+// Project light position onto the image plane
+std::vector<cv::Point2f> lightSourceImgPts;
+cv::projectPoints(std::vector<cv::Point3f>{lightPos}, rvec, tvec, cameraMatrix, distCoeffs, lightSourceImgPts);
 
-        // Project points
-        std::vector<cv::Point2f> imgpts(vertices.size());
-        cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
-        // Draw the light source on the image
-        auto calculateIllumination = [&](const cv::Point3f &p0, const cv::Point3f &p1, const cv::Point3f &p2, const cv::Point3f &lightPos)
-        {
-            // Calculate the normal of the triangle
-            cv::Point3f edge1 = p1 - p0;
-            cv::Point3f edge2 = p2 - p0;
-            cv::Point3f normal = edge1.cross(edge2);
-            double normLength = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
-            normal /= normLength; // Normalize the normal
+// Project points
+std::vector<cv::Point2f> imgpts(vertices.size());
+cv::projectPoints(vertices, rvec, tvec, cameraMatrix, distCoeffs, imgpts);
 
-            // Calculate the light direction vector from the light position
-            cv::Point3f centroid = (p0 + p1 + p2) / 3.0;
-            cv::Point3f lightDir = lightPos - centroid;
-            double lightDirLength = std::sqrt(lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z);
-            lightDir /= lightDirLength; // Normalize the light direction
+// Calculate illumination intensity for a triangle
+auto calculateIllumination = [&](const cv::Point3f &p0, const cv::Point3f &p1, const cv::Point3f &p2, const cv::Point3f &lightPos)
+{
+    // Calculate the normal of the triangle
+    cv::Point3f edge1 = p1 - p0;
+    cv::Point3f edge2 = p2 - p0;
+    cv::Point3f normal = edge1.cross(edge2);
+    double normLength = std::sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+    normal /= normLength; // Normalize the normal
 
-            // Calculate the dot product with the light direction
-            double dotProduct = normal.dot(lightDir);
+    // Calculate the light direction vector from the light position
+    cv::Point3f centroid = (p0 + p1 + p2) / 3.0;
+    cv::Point3f lightDir = lightPos - centroid;
+    double lightDirLength = std::sqrt(lightDir.x * lightDir.x + lightDir.y * lightDir.y + lightDir.z * lightDir.z);
+    lightDir /= lightDirLength; // Normalize the light direction
 
-            // Clamp the dot product to be between 0 and 1
-            double intensity = std::max(0.0, std::min(1.0, dotProduct));
+    // Calculate the dot product with the light direction
+    double dotProduct = normal.dot(lightDir);
 
-            return intensity;
-        };
+    // Clamp the dot product to be between 0 and 1
+    double intensity = std::max(0.0, std::min(1.0, dotProduct));
 
-        for (const auto &pt : imgpts)
-        {
-            cv::circle(image, pt, 2, cv::Scalar(0, 255, 0), -1);
-        }
-        for (const auto &pt : lightSourceImgPts)
-        {
-            cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
-        }
-        for (const auto &face : faces)
+    return intensity;
+};
+
+// Struct to hold information about each face
+struct FaceInfo {
+    std::vector<int> vertices;
+    double depth; // Depth at the centroid of the face
+};
+
+// Calculate the depth of a face as the depth of its centroid
+auto calculateFaceDepth = [&](const std::vector<int>& vertexIndices) {
+    cv::Point3f centroid(0.0, 0.0, 0.0);
+    for (int index : vertexIndices) {
+        centroid += vertices[index - 1]; // Sum of vertex coordinates
+    }
+    // Convert vertexIndices.size() to double to avoid ambiguity
+    centroid /= static_cast<double>(vertexIndices.size()); // Average position
+    return centroid.z; // Depth is the z coordinate of the centroid
+};
+
+// Create a list of faces with their depth information
+std::vector<FaceInfo> faceInfos;
+for (const auto& face : faces) {
+    FaceInfo faceInfo;
+    faceInfo.vertices = face.vertices;
+    faceInfo.depth = calculateFaceDepth(face.vertices);
+    faceInfos.push_back(faceInfo);
+}
+
+// Sort faces by depth (from farthest to closest)
+std::sort(faceInfos.begin(), faceInfos.end(), [](const FaceInfo& a, const FaceInfo& b) {
+    return a.depth > b.depth;
+});
+
+// Draw the light source on the image
+for (const auto &pt : imgpts) {
+    cv::circle(image, pt, 2, cv::Scalar(0, 255, 0), -1);
+}
+for (const auto &pt : lightSourceImgPts) {
+    cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
+}
+
+// Draw faces in order of depth
+for (const auto &faceInfo : faceInfos) {
+    std::vector<cv::Point> points;
+    for (const auto &vertex : faceInfo.vertices) {
+        points.push_back(imgpts[vertex - 1]);
+    }
+    double intensity = calculateIllumination(vertices[faceInfo.vertices[0] - 1], vertices[faceInfo.vertices[1] - 1], vertices[faceInfo.vertices[2] - 1], lightPos);
+    cv::Scalar fillColor = cv::Scalar(0, 255, 0) * intensity;
+    cv::polylines(image, points, true, fillColor, 1);
+    cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
+}
+
+        /*for (const auto &cara : caras)
         {
             std::vector<cv::Point> points;
-            for (const auto &vertex : face.vertices)
+            for (const auto &index : cara.indices)
             {
-                points.push_back(imgpts[vertex - 1]);
+                points.push_back(imgpts[index]);
             }
-            double intensity = calculateIllumination(vertices[face.vertices[0] - 1], vertices[face.vertices[1] - 1], vertices[face.vertices[2] - 1], lightPos);
+            double intensity = calculateIllumination(vertices[cara.indices[0]], vertices[cara.indices[1]], vertices[cara.indices[2]], lightPos);
             cv::Scalar fillColor = cv::Scalar(0, 255, 0) * intensity;
             cv::polylines(image, points, true, fillColor, 1);
             cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
-        }
+        }*/
     }
 
     /*void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
