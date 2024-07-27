@@ -87,12 +87,21 @@ private:
     std::vector<Face> faces;
     std::vector<CaraNew> caras;
     float maxDistancePercentage;
+    double lightSpeed;  // Speed of light movement in radians per second
+    double lightRadius; // Radius of light orbit
+    double startTime;   // Time variable to keep track of the animation
 
 public:
-    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<Face> &faces, float maxDistancePercentage)
-        : vertices(vertices), normals(normals), texCoords(texCoords), faces(faces), maxDistancePercentage(maxDistancePercentage) {}
-    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<CaraNew> &carass, float maxDistancePercentage)
-        : vertices(vertices), normals(normals), texCoords(texCoords), caras(carass), maxDistancePercentage(maxDistancePercentage) {}
+    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<Face> &faces, float maxDistancePercentage, double lightSpeed = 1.0, double lightRadius = 0.4)
+        : vertices(vertices), normals(normals), texCoords(texCoords), faces(faces), maxDistancePercentage(maxDistancePercentage), lightRadius(lightRadius), lightSpeed(lightSpeed)
+    {
+        startTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency(); // Initialize start time
+    }
+    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<CaraNew> &carass, float maxDistancePercentage, double lightSpeed = 1.0, double lightRadius = 0.4)
+        : vertices(vertices), normals(normals), texCoords(texCoords), caras(carass), maxDistancePercentage(maxDistancePercentage), lightRadius(lightRadius), lightSpeed(lightSpeed)
+    {
+        startTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency(); // Initialize start time
+    }
 
     void drawObject(cv::Mat &frame, const cv::Vec3d &rvec, const cv::Vec3d &tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, double movement = 0.0)
     {
@@ -126,12 +135,22 @@ public:
 
         rmat = rmat * addRotX * addRotY;
         cv::Rodrigues(rmat, rvec);
-        //  Calculate light position in object space
-        cv::Mat lightMat = rmat.inv();              // Get the inverse of the rotation matrix
-        cv::Point3f lightSourcePosition(0, 0, 0.4); // Light source position in object space
-        cv::Point3f lightPos = cv::Point3f(lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
-                                           lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
-                                           lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
+        double currentTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency();
+        double time = currentTime - startTime;
+
+        // Oscilación vertical en el eje y usando una función seno
+        double oscillationAmplitude = 0.5; // Amplitud de la oscilación en el eje y
+        double oscillationFrequency = 1.0; // Frecuencia de la oscilación
+        double angle = time * lightSpeed;
+        double yOffset = oscillationAmplitude * sin(oscillationFrequency * angle);                    // Oscilación en y
+        cv::Point3f lightSourcePosition(lightRadius * cos(angle), yOffset, lightRadius * sin(angle)); // Gira en el plano xz y oscila en y
+
+        // Aplicar la rotación a la posición de la luz
+        cv::Mat lightMat = rmat.inv();
+        cv::Point3f lightPos = cv::Point3f(
+            lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
+            lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
+            lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
 
 // Project light position onto the image plane
 std::vector<cv::Point2f> lightSourceImgPts;
