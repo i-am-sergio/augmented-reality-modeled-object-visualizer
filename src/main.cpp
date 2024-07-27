@@ -232,7 +232,7 @@ void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor,
     cout << "Triangulation N de Triangles: " << triangulation.triangles.size() << endl;
     auto carasNew = convertToCaraNew(triangulation);
     cout << "CarasNew N de Caras: " << carasNew.size() << endl;*/
-    ObjectProjection object(vertices, normals, texCoords, faces, max);
+    ObjectProjection object(vertices, normals, texCoords, faces, max, 3.1, 0.1);
     objects.push_back(object);
 }
 
