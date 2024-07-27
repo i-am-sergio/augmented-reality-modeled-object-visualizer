@@ -87,12 +87,21 @@ private:
     std::vector<Face> faces;
     std::vector<CaraNew> caras;
     float maxDistancePercentage;
+    double lightSpeed;  // Speed of light movement in radians per second
+    double lightRadius; // Radius of light orbit
+    double startTime;   // Time variable to keep track of the animation
 
 public:
-    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<Face> &faces, float maxDistancePercentage)
-        : vertices(vertices), normals(normals), texCoords(texCoords), faces(faces), maxDistancePercentage(maxDistancePercentage) {}
-    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<CaraNew> &carass, float maxDistancePercentage)
-        : vertices(vertices), normals(normals), texCoords(texCoords), caras(carass), maxDistancePercentage(maxDistancePercentage) {}
+    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<Face> &faces, float maxDistancePercentage, double lightSpeed = 1.0, double lightRadius = 0.4)
+        : vertices(vertices), normals(normals), texCoords(texCoords), faces(faces), maxDistancePercentage(maxDistancePercentage), lightRadius(lightRadius), lightSpeed(lightSpeed)
+    {
+        startTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency(); // Initialize start time
+    }
+    ObjectProjection(const std::vector<cv::Point3f> &vertices, const std::vector<cv::Point3f> &normals, const std::vector<cv::Point2f> &texCoords, const std::vector<CaraNew> &carass, float maxDistancePercentage, double lightSpeed = 1.0, double lightRadius = 0.4)
+        : vertices(vertices), normals(normals), texCoords(texCoords), caras(carass), maxDistancePercentage(maxDistancePercentage), lightRadius(lightRadius), lightSpeed(lightSpeed)
+    {
+        startTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency(); // Initialize start time
+    }
 
     void drawObject(cv::Mat &frame, const cv::Vec3d &rvec, const cv::Vec3d &tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, double movement = 0.0)
     {
