@@ -66,6 +66,18 @@ class LoadCamera {
 
         AnimationConfig animationConfig;
 
+        vector<cv::Scalar> baseColors = {
+            cv::Scalar(255, 0, 0), // Blue
+            cv::Scalar(0, 255, 0), // Green
+            cv::Scalar(0, 0, 255), // Red
+            cv::Scalar(176, 109, 242), // Purple
+            cv::Scalar(154, 250, 65), // Aqua
+            cv::Scalar(255, 229, 84), // Sky Blue
+            cv::Scalar(0, 255, 255), // Yellow
+            cv::Scalar(255, 0, 255), // Orange
+        };
+        int currentColorIndex = 0;
+
     public:
         LoadCamera(vector<ObjectProjection>& objectsProjections){
             // Objects projections
@@ -88,6 +100,7 @@ class LoadCamera {
             this->animationConfig.step = 0.01;
             this->animationConfig.scaleStep = 0.1;
             this->animationConfig.rotationSpeedZ = 0.1;
+            this->animationConfig.baseColor = cv::Scalar(0, 255, 0); // Green
         }
 
         ~LoadCamera(){
@@ -104,9 +117,6 @@ class LoadCamera {
         void showCamera(){
             cv::namedWindow("Camera");
             cv::setMouseCallback("Camera", onMouse, this);
-            
-            // double movement = 0.0;  // Variable para controlar el movimiento en el eje Z
-            // bool move_up = true;    // Variable para controlar la dirección del movimiento
 
             while (true){
                 this->cap >> frame;
@@ -173,18 +183,6 @@ class LoadCamera {
                         }
                     }
 
-                    // // Controlar la animación del movimiento en el eje Z
-                    // if (move_up) {
-                    //     movement += 0.01;  // Incrementar movimiento hacia arriba
-                    //     if (movement >= 0.1) {
-                    //         move_up = false;  // Cambiar dirección al alcanzar el límite superior
-                    //     }
-                    // } else {
-                    //     movement -= 0.01;  // Decrementar movimiento hacia abajo
-                    //     if (movement <= -0.1) {
-                    //         move_up = true;  // Cambiar dirección al alcanzar el límite inferior
-                    //     }
-                    // }
                 }
 
                 cv::imshow("Camera", frame);
@@ -202,6 +200,10 @@ class LoadCamera {
                 if (cv::getWindowProperty("Camera", cv::WND_PROP_AUTOSIZE) == -1)
                 {
                     break;
+                }
+                if (key == 'c') {
+                    currentColorIndex = (currentColorIndex + 1) % baseColors.size();
+                    this->animationConfig.baseColor = baseColors[currentColorIndex];
                 }
                 if (key == 'g')
                 {
