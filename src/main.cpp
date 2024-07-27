@@ -63,6 +63,7 @@ int main()
 {
     // Load 3D models
     vector<ObjectProjection> objects;
+    loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f); // botella con mesh 3d
     loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
     loadAndAddModel("models/wolf.obj", 0.0005f, 0.9f, objects, 0.15f);
     loadAndAddModel("models/fox.obj", 0.004f, 1.0f, objects, 0.15f);
