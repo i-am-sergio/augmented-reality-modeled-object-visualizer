@@ -9,6 +9,24 @@
 #include <cmath>
 #include <unordered_map>
 #include <functional>
+
+struct AnimationConfig
+{
+    bool spin;
+    bool iluminate;
+    bool rotate;
+
+    double step;
+
+    double xTranslation;
+    double yTranslation;
+    double scaleObject;
+
+    double rotationSpeedZ;
+    double scaleStep;
+};
+
+
 struct CaraNew
 {
     std::vector<int> indices; // Lista de índices de los vértices
@@ -125,22 +143,37 @@ public:
             cv::fillConvexPoly(frame, points, cv::Scalar(255, 179, 153));
         }
     }
-    void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
+    void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0), const AnimationConfig &animationConfig = AnimationConfig())
     {
         // Convert rotation vector to rotation matrix
         cv::Mat rmat;
         cv::Rodrigues(rvec, rmat);
         cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
         cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]), 0, 1, 0, -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
+        cv::Mat addRotZ = (cv::Mat_<double>(3, 3) << cos(additionalRotation[2]), -sin(additionalRotation[2]), 0, sin(additionalRotation[2]), cos(additionalRotation[2]), 0, 0, 0, 1);
+        rmat = rmat * addRotX * addRotY * addRotZ;
 
-        rmat = rmat * addRotX * addRotY;
         cv::Rodrigues(rmat, rvec);
-        //  Calculate light position in object space
-        cv::Mat lightMat = rmat.inv();              // Get the inverse of the rotation matrix
-        cv::Point3f lightSourcePosition(0, 0, 0.4); // Light source position in object space
-        cv::Point3f lightPos = cv::Point3f(lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
-                                           lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
-                                           lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
+        
+        double currentTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency();
+        double time = currentTime - startTime;
+
+        // Oscilación vertical en el eje y usando una función seno
+        double oscillationAmplitude = 0.5; // Amplitud de la oscilación en el eje y
+        double oscillationFrequency = 1.0; // Frecuencia de la oscilación
+        double angle = time * lightSpeed;
+        double yOffset = oscillationAmplitude * sin(oscillationFrequency * angle);                    // Oscilación en y
+        cv::Point3f lightSourcePosition(lightRadius * cos(angle), yOffset, lightRadius * sin(angle)); // Gira en el plano xz y oscila en y
+
+        // Aplicar la rotación a la posición de la luz
+        tvec[0] += animationConfig.xTranslation;
+        tvec[1] += animationConfig.yTranslation;
+        tvec[2] += animationConfig.scaleObject;
+        cv::Mat lightMat = rmat.inv();
+        cv::Point3f lightPos = cv::Point3f(
+            lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
+            lightMat.at<double>(1, 0) * lightSourcePosition.x + lightMat.at<double>(1, 1) * lightSourcePosition.y + lightMat.at<double>(1, 2) * lightSourcePosition.z,
+            lightMat.at<double>(2, 0) * lightSourcePosition.x + lightMat.at<double>(2, 1) * lightSourcePosition.y + lightMat.at<double>(2, 2) * lightSourcePosition.z);
 
 // Project light position onto the image plane
 std::vector<cv::Point2f> lightSourceImgPts;
