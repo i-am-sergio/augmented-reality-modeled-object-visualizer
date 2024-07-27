@@ -61,34 +61,37 @@ cv::Point3f findMedianPointX(const std::vector<cv::Point3f> &points)
     return medianPoint;
 }
 
-// Función para aplanar los puntos 3D en un plano 2D
+// Función para aplanar los puntos 3D en un plano 2D con distribución circular
 std::vector<FlattenedPoint> flattenPointsXY(const std::vector<cv::Point3f> &points)
 {
     std::vector<FlattenedPoint> flattenedPoints;
-
     // Encontrar el punto medio más alto en z
     cv::Point3f medianPoint = findMedianPointZ(points);
 
     // Proyectar los puntos en el plano 2D (x, y) y ajustar según z
-    for (size_t i = 0; i < points.size(); ++i)
+    for (const auto &pt : points)
     {
-        const auto &pt = points[i];
         FlattenedPoint flattenedPoint;
         flattenedPoint.originalPoint = pt;
-        flattenedPoint.index = i;
+        flattenedPoint.index = pt.x; // Assuming index corresponds to x here, but it can be updated as needed
 
+        double scale;
         if (pt.z == medianPoint.z)
         {
             flattenedPoint.flattenedPoint = cv::Point2f(pt.x, pt.y); // Sin ajuste si z es igual
         }
         else
         {
-            double scale = medianPoint.z / (medianPoint.z - pt.z);
-            double newX = pt.x + (pt.x - medianPoint.x) * scale;
-            double newY = pt.y + (pt.y - medianPoint.y) * scale;
+            // Calculate circular position
+            double zDiff = medianPoint.z - pt.z;
+            double radius = zDiff * 0.1; // Adjust the scale factor (0.1) to change how the circle grows
+
+            // Calculate angle in the circle based on the point's x and y
+            double angle = std::atan2(pt.y - medianPoint.y, pt.x - medianPoint.x);
+            double newX = medianPoint.x + radius * std::cos(angle);
+            double newY = medianPoint.y + radius * std::sin(angle);
             flattenedPoint.flattenedPoint = cv::Point2f(newX, newY);
         }
-
         flattenedPoints.push_back(flattenedPoint);
     }
 
@@ -217,7 +220,8 @@ void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor,
     cout << "Reduction N de Normals: " << normals.size() << endl;
     cout << "Reduction N de TextCoords: " << texCoords.size() << endl;
     cout << "Reduction N de Faces: " << faces.size() << endl;
-    auto flattenedPoints = flattenPointsXY(vertices);
+    /*auto flattenedPoints = flattenPointsXY(vertices);
+    cout << "Flattened N de Vertices: " << flattenedPoints.size() << endl;
     /// delaunay with points2d
     std::vector<delaunay2d::Point<float>> delaunayPoints;
     for (const auto &pt : flattenedPoints)
@@ -225,8 +229,10 @@ void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor,
         delaunayPoints.push_back({pt.flattenedPoint.x, pt.flattenedPoint.y, pt.index});
     }
     auto triangulation = triangulate(delaunayPoints);
+    cout << "Triangulation N de Triangles: " << triangulation.triangles.size() << endl;
     auto carasNew = convertToCaraNew(triangulation);
-    ObjectProjection object(vertices, normals, texCoords, carasNew, max);
+    cout << "CarasNew N de Caras: " << carasNew.size() << endl;*/
+    ObjectProjection object(vertices, normals, texCoords, faces, max);
     objects.push_back(object);
 }
 
@@ -236,10 +242,10 @@ int main()
     vector<ObjectProjection> objects;
     // loadAndAddModel("models/wolf.obj", 0.0004f, 0.5f, objects, 0.15f);
     // loadAndAddModel("models/rat.obj", 0.004f, 0.5f, objects, 0.1f);
-    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
-    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
-    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
-    loadAndAddModel("models/Corona.obj", 0.010f, 0.1f, objects, 0.9f);
+    loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
+    // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
+    // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
+    /// loadAndAddModel("models/botella.obj", 0.003f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
     // loadAndAddModel("models/sphere10000.obj", 0.002f, 0.5f, objects, 0.2f);
     // loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);

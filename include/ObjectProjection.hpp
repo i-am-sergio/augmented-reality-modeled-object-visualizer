@@ -125,8 +125,8 @@ public:
         cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]), 0, 1, 0, -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
 
         rmat = rmat * addRotX * addRotY;
-
-        // Calculate light position in object space
+        // cv::Rodrigues(rmat, rvec);
+        //  Calculate light position in object space
         cv::Mat lightMat = rmat.inv();              // Get the inverse of the rotation matrix
         cv::Point3f lightSourcePosition(0, 0, 0.4); // Light source position in object space
         cv::Point3f lightPos = cv::Point3f(lightMat.at<double>(0, 0) * lightSourcePosition.x + lightMat.at<double>(0, 1) * lightSourcePosition.y + lightMat.at<double>(0, 2) * lightSourcePosition.z,
@@ -174,8 +174,20 @@ public:
         {
             cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
         }
+        for (const auto &face : faces)
+        {
+            std::vector<cv::Point> points;
+            for (const auto &vertex : face.vertices)
+            {
+                points.push_back(imgpts[vertex - 1]);
+            }
+            double intensity = calculateIllumination(vertices[face.vertices[0] - 1], vertices[face.vertices[1] - 1], vertices[face.vertices[2] - 1], lightPos);
+            cv::Scalar fillColor = cv::Scalar(0, 255, 0) * intensity;
+            cv::polylines(image, points, true, fillColor, 1);
+            cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
+        }
 
-        for (const auto &cara : caras)
+        /*for (const auto &cara : caras)
         {
             std::vector<cv::Point> points;
             for (const auto &index : cara.indices)
@@ -186,7 +198,7 @@ public:
             cv::Scalar fillColor = cv::Scalar(0, 255, 0) * intensity;
             cv::polylines(image, points, true, fillColor, 1);
             cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
-        }
+        }*/
     }
 
     /*void drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, cv::Vec3d additionalRotation = cv::Vec3d(0, 0, 0))
