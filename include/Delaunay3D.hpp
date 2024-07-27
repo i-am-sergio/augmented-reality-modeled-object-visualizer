@@ -6,13 +6,12 @@
 
 namespace delaunay3D
 {
-
-  constexpr double eps = 1e-4;
+  constexpr double eps = 1e-6;
 
   template <typename T>
   struct Point
   {
-    T x, y, z; // Added z coordinate
+    T x, y, z;
 
     Point() : x{0}, y{0}, z{0} {}
     Point(T _x, T _y, T _z) : x{_x}, y{_y}, z{_z} {}
@@ -106,26 +105,34 @@ namespace delaunay3D
     std::vector<Edge<T>> edges;
   };
 
-  template <
-      typename T,
-      typename = typename std::enable_if<std::is_floating_point<T>::value>::type>
-  Delaunay3D<T> triangulates(const std::vector<Point<T>> &points)
+  template <typename T>
+  Delaunay3D<T> triangulates2D(const std::vector<Point<T>> &points, bool useX, bool useY)
   {
     using Node = Point<T>;
     if (points.size() < 3)
     {
       return Delaunay3D<T>{};
     }
-    auto xmin = points[0].x;
-    auto xmax = xmin;
-    auto ymin = points[0].y;
-    auto ymax = ymin;
+
+    // Determine the min and max for the coordinates used
+    T xmin = points[0].x;
+    T xmax = xmin;
+    T ymin = points[0].y;
+    T ymax = ymin;
+    if (!useX)
+    {
+      xmin = ymin;
+      xmax = ymax;
+    }
+
     for (auto const &pt : points)
     {
-      xmin = std::min(xmin, pt.x);
-      xmax = std::max(xmax, pt.x);
-      ymin = std::min(ymin, pt.y);
-      ymax = std::max(ymax, pt.y);
+      T valX = useX ? pt.x : pt.y;
+      T valY = useY ? pt.y : pt.z;
+      xmin = std::min(xmin, valX);
+      xmax = std::max(xmax, valX);
+      ymin = std::min(ymin, valY);
+      ymax = std::max(ymax, valY);
     }
 
     const auto dx = xmax - xmin;
@@ -216,4 +223,21 @@ namespace delaunay3D
     return d;
   }
 
+  template <typename T>
+  Delaunay3D<T> triangulatesXY(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, true, true);
+  }
+
+  template <typename T>
+  Delaunay3D<T> triangulatesXZ(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, true, false);
+  }
+
+  template <typename T>
+  Delaunay3D<T> triangulatesYZ(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, false, false);
+  }
 }
