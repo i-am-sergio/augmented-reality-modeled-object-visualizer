@@ -1,3 +1,5 @@
+
+
 #pragma once
 
 #include <opencv2/opencv.hpp>
@@ -62,6 +64,8 @@ class LoadCamera {
         cv::Point lastMousePos;
         cv::Vec3d rotation;
 
+        AnimationConfig animationConfig;
+
     public:
         LoadCamera(vector<ObjectProjection>& objectsProjections){
             // Objects projections
@@ -74,6 +78,16 @@ class LoadCamera {
             this->markerLength = 0.1f;
             // Default rotation
             this->rotation = cv::Vec3d(0, 0, 0);
+
+            this->animationConfig.iluminate = false;
+            this->animationConfig.rotate = false;
+            this->animationConfig.iluminate = true;
+            this->animationConfig.scaleObject = 0.0;
+            this->animationConfig.xTranslation = 0.0;
+            this->animationConfig.yTranslation = 0.0;
+            this->animationConfig.step = 0.01;
+            this->animationConfig.scaleStep = 0.1;
+            this->animationConfig.rotationSpeedZ = 0.1;
         }
 
         ~LoadCamera(){
@@ -123,25 +137,25 @@ class LoadCamera {
                         cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
                         // Select the vertices based on the marker ID
-                        if (markerIDs[i] == 11) 
+                        if (markerIDs[i] == 11)
                         {
-                            //objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
-                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
-                        } 
-                        else if (markerIDs[i] == 12) 
+                            // objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[0].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                        }
+                        else if (markerIDs[i] == 12)
                         {
-                            //objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
-                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
-                        } 
-                        else if (markerIDs[i] == 13) 
+                            // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                            objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                        }
+                        else if (markerIDs[i] == 13)
                         {
                             // objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
-                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
+                            objectsProjections[2].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
                         }
-                        else if (markerIDs[i] == 14) 
+                        else if (markerIDs[i] == 14)
                         {
                             // objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
-                            objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation);
+                            objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
                         }
                         else if (markerIDs[i] == 40) 
                         {
@@ -174,14 +188,62 @@ class LoadCamera {
                 }
 
                 cv::imshow("Camera", frame);
+                int key = cv::waitKey(10);
+
+                rotation[2] += animationConfig.rotationSpeedZ;
+                if (rotation[2] > CV_PI)
+                        rotation[2] -= 2 * CV_PI;
 
                 // stop to press 'q' or 'esc'
-                if (cv::waitKey(10) == 27 || cv::waitKey(10) == 'q'){
+                if (key == 27 || key == 'q')
+                {
                     break;
                 }
-                // stop to clicked x button
-                if (cv::getWindowProperty("Camera", cv::WND_PROP_AUTOSIZE) == -1){
+                if (cv::getWindowProperty("Camera", cv::WND_PROP_AUTOSIZE) == -1)
+                {
                     break;
+                }
+                if (key == 'g')
+                {
+                    this->animationConfig.rotate = false;
+                    this->animationConfig.iluminate = false;
+                    this->animationConfig.spin = true;
+                }
+                if (key == 'i')
+                {
+                    this->animationConfig.rotate = false;
+                    this->animationConfig.iluminate = true;
+                    this->animationConfig.spin = false;
+                }
+                if (key == 'r')
+                {
+                    this->animationConfig.rotate = true;
+                    this->animationConfig.iluminate = false;
+                    this->animationConfig.spin = false;
+                }
+                if (key == 'd')
+                {
+                    this->animationConfig.xTranslation += this->animationConfig.step;
+                }
+                if (key == 'a')
+                {
+                    this->animationConfig.xTranslation -= this->animationConfig.step;
+                }
+                if (key == 'w')
+                {
+                    animationConfig.yTranslation -= this->animationConfig.step;
+                }
+                if (key == 's')
+                {
+                    this->animationConfig.yTranslation += this->animationConfig.step;
+                }
+                if (key == 'k')
+                {
+                    this->animationConfig.scaleObject += this->animationConfig.scaleStep;
+                }
+                if (key == 'm')
+                {
+                    this->animationConfig.scaleObject -= this->animationConfig.scaleStep;
                 }
             }
 
