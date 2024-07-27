@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include <opencv2/opencv.hpp>
@@ -45,10 +46,27 @@ namespace std
         }
     };
 }
+
 using namespace cv;
 using namespace std;
 using namespace delaunay;
 using namespace delaunay3D;
+
+struct AnimationConfig
+{
+    bool spin;
+    bool iluminate;
+    bool rotate;
+
+    double step;
+
+    double xTranslation;
+    double yTranslation;
+    double scaleObject;
+
+    double rotationSpeedZ;
+    double scaleStep;
+};
 
 double euclideanDistance(const cv::Point3f &p1, const cv::Point3f &p2)
 {
