@@ -1,155 +1,243 @@
 #pragma once
 
-#include <vector>
 #include <algorithm>
 #include <iostream>
-#include <cmath>
-#include <limits>
-#include <tuple>
+#include <vector>
 
-namespace delaunay3d {
+namespace delaunay3D
+{
+  constexpr double eps = 1e-6;
 
-constexpr double eps = 1e-10;
-
-template <typename T>
-struct Point {
+  template <typename T>
+  struct Point
+  {
     T x, y, z;
 
-    Point() : x(0), y(0), z(0) {}
-    Point(T _x, T _y, T _z) : x(_x), y(_y), z(_z) {}
+    Point() : x{0}, y{0}, z{0} {}
+    Point(T _x, T _y, T _z) : x{_x}, y{_y}, z{_z} {}
 
-    bool operator==(const Point& other) const {
-        return (std::abs(x - other.x) < eps && std::abs(y - other.y) < eps && std::abs(z - other.z) < eps);
+    template <typename U>
+    Point(U _x, U _y, U _z) : x{static_cast<T>(_x)}, y{static_cast<T>(_y)}, z{static_cast<T>(_z)}
+    {
     }
 
-    bool operator!=(const Point& other) const {
-        return !(*this == other);
-    }
-};
-
-template <typename T>
-struct Edge {
-    Point<T> p0, p1;
-
-    Edge(Point<T> _p0, Point<T> _p1) : p0(_p0), p1(_p1) {
-        if (p1 < p0) std::swap(p0, p1);
+    friend std::ostream &operator<<(std::ostream &os, const Point<T> &p)
+    {
+      os << "x=" << p.x << "  y=" << p.y << "  z=" << p.z;
+      return os;
     }
 
-    bool operator==(const Edge& other) const {
-        return (p0 == other.p0 && p1 == other.p1);
+    bool operator==(const Point<T> &other) const
+    {
+      return (other.x == x && other.y == y && other.z == z);
     }
 
-    bool operator<(const Edge& other) const {
-        return std::tie(p0, p1) < std::tie(other.p0, other.p1);
+    bool operator!=(const Point<T> &other) const { return !operator==(other); }
+  };
+
+  template <typename T>
+  struct Edge
+  {
+    using Node = Point<T>;
+    Node p0, p1;
+
+    Edge(Node const &_p0, Node const &_p1) : p0{_p0}, p1{_p1} {}
+
+    friend std::ostream &operator<<(std::ostream &os, const Edge &e)
+    {
+      os << "p0: [" << e.p0 << " ] p1: [" << e.p1 << "]";
+      return os;
     }
-};
 
-template <typename T>
-struct Tetrahedron {
-    Point<T> p0, p1, p2, p3;
+    bool operator==(const Edge &other) const
+    {
+      return ((other.p0 == p0 && other.p1 == p1) ||
+              (other.p0 == p1 && other.p1 == p0));
+    }
+  };
 
-    Tetrahedron(Point<T> _p0, Point<T> _p1, Point<T> _p2, Point<T> _p3)
-        : p0(_p0), p1(_p1), p2(_p2), p3(_p3) {}
+  template <typename T>
+  struct Circle
+  {
+    T x, y, radius;
+    Circle() = default;
+  };
 
-    // Add any necessary methods for tetrahedron manipulation
-};
+  template <typename T>
+  struct Triangle
+  {
+    using Node = Point<T>;
+    Node p0, p1, p2;
+    Edge<T> e0, e1, e2;
+    Circle<T> circle;
 
-template <typename T>
-struct Delaunay3D {
-    std::vector<Tetrahedron<T>> tetrahedrons;
+    Triangle(const Node &_p0, const Node &_p1, const Node &_p2)
+        : p0{_p0},
+          p1{_p1},
+          p2{_p2},
+          e0{_p0, _p1},
+          e1{_p1, _p2},
+          e2{_p0, _p2},
+          circle{}
+    {
+      const auto ax = p1.x - p0.x;
+      const auto ay = p1.y - p0.y;
+      const auto bx = p2.x - p0.x;
+      const auto by = p2.y - p0.y;
 
-    Delaunay3D(const std::vector<Point<T>>& points) {
-        // Placeholder for initial super tetrahedron
-        Point<T> p0(0, 0, 0), p1(1000, 0, 0), p2(0, 1000, 0), p3(0, 0, 1000);
-        Tetrahedron<T> super(p0, p1, p2, p3);
-        tetrahedrons.push_back(super);
+      const auto m = p1.x * p1.x - p0.x * p0.x + p1.y * p1.y - p0.y * p0.y;
+      const auto u = p2.x * p2.x - p0.x * p0.x + p2.y * p2.y - p0.y * p0.y;
+      const auto s = 1. / (2. * (ax * by - ay * bx));
 
-        for (const auto& point : points) {
-            std::vector<Edge<T>> boundary_edges;
-            std::vector<Tetrahedron<T>> new_tetrahedrons;
+      circle.x = ((p2.y - p0.y) * m + (p0.y - p1.y) * u) * s;
+      circle.y = ((p0.x - p2.x) * m + (p1.x - p0.x) * u) * s;
 
-            auto it = tetrahedrons.begin();
-            while (it != tetrahedrons.end()) {
-                if (isPointInsideCircumsphere(point, *it)) {
-                    collectBoundaryEdges(*it, boundary_edges);
-                    it = tetrahedrons.erase(it);
-                } else {
-                    ++it;
-                }
-            }
+      const auto dx = p0.x - circle.x;
+      const auto dy = p0.y - circle.y;
+      circle.radius = dx * dx + dy * dy;
+    }
+  };
 
-            removeDuplicateEdges(boundary_edges);
+  template <typename T>
+  struct Delaunay3D
+  {
+    std::vector<Triangle<T>> triangles;
+    std::vector<Edge<T>> edges;
+  };
 
-            for (const auto& edge : boundary_edges) {
-                new_tetrahedrons.emplace_back(edge.p0, edge.p1, point, p3); // p3 is a placeholder
-            }
+  template <typename T>
+  Delaunay3D<T> triangulates2D(const std::vector<Point<T>> &points, bool useX, bool useY)
+  {
+    using Node = Point<T>;
+    if (points.size() < 3)
+    {
+      return Delaunay3D<T>{};
+    }
 
-            tetrahedrons.insert(tetrahedrons.end(), new_tetrahedrons.begin(), new_tetrahedrons.end());
+    // Determine the min and max for the coordinates used
+    T xmin = points[0].x;
+    T xmax = xmin;
+    T ymin = points[0].y;
+    T ymax = ymin;
+    if (!useX)
+    {
+      xmin = ymin;
+      xmax = ymax;
+    }
+
+    for (auto const &pt : points)
+    {
+      T valX = useX ? pt.x : pt.y;
+      T valY = useY ? pt.y : pt.z;
+      xmin = std::min(xmin, valX);
+      xmax = std::max(xmax, valX);
+      ymin = std::min(ymin, valY);
+      ymax = std::max(ymax, valY);
+    }
+
+    const auto dx = xmax - xmin;
+    const auto dy = ymax - ymin;
+    const auto dmax = std::max(dx, dy);
+    const auto midx = (xmin + xmax) / static_cast<T>(2.);
+    const auto midy = (ymin + ymax) / static_cast<T>(2.);
+
+    /* Init Delaunay triangulation. */
+    auto d = Delaunay3D<T>{};
+
+    const auto p0 = Node{midx - 20 * dmax, midy - dmax, 0};
+    const auto p1 = Node{midx, midy + 20 * dmax, 0};
+    const auto p2 = Node{midx + 20 * dmax, midy - dmax, 0};
+    d.triangles.emplace_back(Triangle<T>{p0, p1, p2});
+
+    for (auto const &pt : points)
+    {
+      std::vector<Edge<T>> edges;
+      std::vector<Triangle<T>> tmps;
+      for (auto const &tri : d.triangles)
+      {
+        /* Check if the point is inside the triangle circumcircle. */
+        const auto dist = (tri.circle.x - pt.x) * (tri.circle.x - pt.x) +
+                          (tri.circle.y - pt.y) * (tri.circle.y - pt.y);
+        if ((dist - tri.circle.radius) <= eps)
+        {
+          edges.push_back(tri.e0);
+          edges.push_back(tri.e1);
+          edges.push_back(tri.e2);
         }
-
-        // Remove tetrahedrons connected to the initial super tetrahedron vertices
-        removeSuperTetrahedronVertices(p0, p1, p2, p3);
-    }
-
-private:
-    bool isPointInsideCircumsphere(const Point<T>& pt, const Tetrahedron<T>& tetra) {
-        auto det = [](const Point<T>& p1, const Point<T>& p2, const Point<T>& p3, const Point<T>& p4) {
-            return (p1.x - p4.x) * ((p2.y - p4.y) * (p3.z - p4.z) - (p2.z - p4.z) * (p3.y - p4.y))
-                 - (p1.y - p4.y) * ((p2.x - p4.x) * (p3.z - p4.z) - (p2.z - p4.z) * (p3.x - p4.x))
-                 + (p1.z - p4.z) * ((p2.x - p4.x) * (p3.y - p4.y) - (p2.y - p4.y) * (p3.x - p4.x));
-        };
-    
-        T mat[4][4] = {
-            {tetra.p0.x, tetra.p0.y, tetra.p0.z, 1},
-            {tetra.p1.x, tetra.p1.y, tetra.p1.z, 1},
-            {tetra.p2.x, tetra.p2.y, tetra.p2.z, 1},
-            {tetra.p3.x, tetra.p3.y, tetra.p3.z, 1}
-        };
-    
-        T d = det(tetra.p0, tetra.p1, tetra.p2, tetra.p3);
-        if (std::abs(d) < eps) return false; // Degenerate tetrahedron
-    
-        for (int i = 0; i < 4; ++i) {
-            mat[i][0] = pt.x;
-            mat[i][1] = pt.y;
-            mat[i][2] = pt.z;
-            if (i > 0) {
-                mat[i-1][0] = tetra.p0.x;
-                mat[i-1][1] = tetra.p0.y;
-                mat[i-1][2] = tetra.p0.z;
-            }
-            T dp = det(
-                {mat[0][0], mat[0][1], mat[0][2]},
-                {mat[1][0], mat[1][1], mat[1][2]},
-                {mat[2][0], mat[2][1], mat[2][2]},
-                {mat[3][0], mat[3][1], mat[3][2]}
-            );
-            if ((d < 0 && dp > 0) || (d > 0 && dp < 0)) return false;
+        else
+        {
+          tmps.push_back(tri);
         }
-    
-        return true;
+      }
+
+      /* Delete duplicate edges. */
+      std::vector<bool> remove(edges.size(), false);
+      for (auto it1 = edges.begin(); it1 != edges.end(); ++it1)
+      {
+        for (auto it2 = edges.begin(); it2 != edges.end(); ++it2)
+        {
+          if (it1 == it2)
+          {
+            continue;
+          }
+          if (*it1 == *it2)
+          {
+            remove[std::distance(edges.begin(), it1)] = true;
+            remove[std::distance(edges.begin(), it2)] = true;
+          }
+        }
+      }
+
+      edges.erase(
+          std::remove_if(edges.begin(), edges.end(),
+                         [&](auto const &e)
+                         { return remove[&e - &edges[0]]; }),
+          edges.end());
+
+      /* Update triangulation. */
+      for (auto const &e : edges)
+      {
+        tmps.push_back({e.p0, e.p1, {pt.x, pt.y, pt.z}});
+      }
+      d.triangles = tmps;
     }
 
-    void collectBoundaryEdges(const Tetrahedron<T>& tetra, std::vector<Edge<T>>& edges) {
-        edges.push_back(Edge<T>(tetra.p0, tetra.p1));
-        edges.push_back(Edge<T>(tetra.p1, tetra.p2));
-        edges.push_back(Edge<T>(tetra.p2, tetra.p0));
-        edges.push_back(Edge<T>(tetra.p0, tetra.p3));
-        edges.push_back(Edge<T>(tetra.p1, tetra.p3));
-        edges.push_back(Edge<T>(tetra.p2, tetra.p3));
-    }
+    /* Remove original super triangle. */
+    d.triangles.erase(
+        std::remove_if(d.triangles.begin(), d.triangles.end(),
+                       [&](auto const &tri)
+                       {
+                         return ((tri.p0 == p0 || tri.p1 == p0 || tri.p2 == p0) ||
+                                 (tri.p0 == p1 || tri.p1 == p1 || tri.p2 == p1) ||
+                                 (tri.p0 == p2 || tri.p1 == p2 || tri.p2 == p2));
+                       }),
+        d.triangles.end());
 
-    void removeDuplicateEdges(std::vector<Edge<T>>& edges) {
-        std::sort(edges.begin(), edges.end());
-        edges.erase(std::unique(edges.begin(), edges.end()), edges.end());
+    /* Add edges. */
+    for (auto const &tri : d.triangles)
+    {
+      d.edges.push_back(tri.e0);
+      d.edges.push_back(tri.e1);
+      d.edges.push_back(tri.e2);
     }
+    return d;
+  }
 
-    void removeSuperTetrahedronVertices(const Point<T>& p0, const Point<T>& p1, const Point<T>& p2, const Point<T>& p3) {
-        tetrahedrons.erase(std::remove_if(tetrahedrons.begin(), tetrahedrons.end(),
-            [&p0, &p1, &p2, &p3](const Tetrahedron<T>& tetra) {
-                return tetra.p0 == p0 || tetra.p1 == p1 || tetra.p2 == p2 || tetra.p3 == p3;
-            }), tetrahedrons.end());
-    }
-};
+  template <typename T>
+  Delaunay3D<T> triangulatesXY(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, true, true);
+  }
 
+  template <typename T>
+  Delaunay3D<T> triangulatesXZ(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, true, false);
+  }
+
+  template <typename T>
+  Delaunay3D<T> triangulatesYZ(const std::vector<Point<T>> &points)
+  {
+    return triangulates2D(points, false, false);
+  }
 }
