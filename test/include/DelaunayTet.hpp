@@ -6,6 +6,7 @@
 #include <cmath>
 
 namespace delaunay {
+  using namespace std;
 
 constexpr double eps = 1e-4;
 
@@ -128,6 +129,9 @@ Delaunay3D<T> triangulate(const std::vector<Point3D<T>>& points)
   T xmin = points[0].x, xmax = points[0].x;
   T ymin = points[0].y, ymax = points[0].y;
   T zmin = points[0].z, zmax = points[0].z;
+
+  cout << "=== First Part ===" << endl;
+
   for (const auto& p : points) {
     xmin = std::min(xmin, p.x);
     xmax = std::max(xmax, p.x);
@@ -153,11 +157,14 @@ Delaunay3D<T> triangulate(const std::vector<Point3D<T>>& points)
 
   d.tetrahedra.emplace_back(p0, p1, p2, p3);
 
+  cout << "=== Second Part ===" << endl;
+
+  int contador = 0;
   for (const auto& p : points) {
     std::vector<Edge3D<T>> edges;
     std::vector<Tetrahedron<T>> tmps;
 
-    std::cout<<"p = "<<p<<std::endl;
+    cout << ++contador << " -> Point: " << p << endl;
 
     for (const auto& tet : d.tetrahedra) {
       if (tet.isPointInsideCircumsphere(p)) {
@@ -172,6 +179,8 @@ Delaunay3D<T> triangulate(const std::vector<Point3D<T>>& points)
       }
     }
 
+    cout << "=== Third Part ===" << endl;
+
     d.tetrahedra = tmps;
 
     std::vector<Edge3D<T>> unique_edges;
@@ -184,6 +193,8 @@ Delaunay3D<T> triangulate(const std::vector<Point3D<T>>& points)
         unique_edges.push_back(e);
       }
     }
+
+    cout << "=== Fourth Part ===" << endl;
 
     for (const auto& e : unique_edges) {
       d.tetrahedra.emplace_back(e.p0, e.p1, e.p1, p);
