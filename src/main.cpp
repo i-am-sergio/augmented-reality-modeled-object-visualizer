@@ -63,12 +63,15 @@ int main()
 {
     // Load 3D models
     vector<ObjectProjection> objects;
+    loadAndAddModel("models/botellapoissonmesh.obj", 0.003f, 0.3f, objects, 0.9f); // botella con poisson mesh generado por src/ply2obj.cpp
+    loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f); // botella con mesh 3d generada por python
     loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
-    loadAndAddModel("models/wolf.obj", 0.0005f, 0.9f, objects, 0.15f);
-    loadAndAddModel("models/fox.obj", 0.004f, 1.0f, objects, 0.15f);
-    // loadAndAddModel("models/sheet.obj", 0.1f, 1.0f, objects, 0.15f); // TO DO
-    // loadAndAddModel("models/pegasus.obj", 0.004f, 0.05f, objects, 0.15f); // TO DO
-    // loadAndAddModel("models/rat.obj", 0.01f, 0.5f, objects, 0.1f); // TO DO
+    // loadAndAddModel("models/wolf.obj", 0.0005f, 0.9f, objects, 0.15f); // funciona
+    // loadAndAddModel("models/fox.obj", 0.004f, 1.0f, objects, 0.15f); // funciona
+    // loadAndAddModel("models/pegasus.obj", 0.08f, 0.05f, objects, 0.15f); // funciona
+
+    // loadAndAddModel("models/sheet.obj", 0.1f, 1.0f, objects, 0.15f);
+    // loadAndAddModel("models/rat.obj", 0.01f, 0.5f, objects, 0.1f);
     // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
     /// loadAndAddModel("models/botella.obj", 0.003f, 0.1f, objects, 0.9f);
