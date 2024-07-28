@@ -33,16 +33,7 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
     cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
     cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), -sin(additionalRotation[1]), 0, sin(additionalRotation[1]), cos(additionalRotation[1]), 0, 0, 0, 1);
     cv::Mat addRotZ = (cv::Mat_<double>(3, 3) << cos(additionalRotation[2]), 0, sin(additionalRotation[2]), 0, 1, 0, -sin(additionalRotation[2]), 0, cos(additionalRotation[2]));
-    cv::Mat borracha = (cv::Mat_<double>(3, 3) << cos(additionalRotation[2]), -sin(additionalRotation[2]), 0, sin(additionalRotation[2]), cos(additionalRotation[2]), 0, 0, 0, 1);
-
-    if (animationConfig.spin == true)
-    {
-        rmat = rmat * borracha; // botella borracha
-    }
-    if (animationConfig.rotate == true)
-    {
-        rmat = rmat * addRotX * addRotY * addRotZ; // en su propio eje
-    }
+    rmat = rmat * addRotX * addRotY * addRotZ; // en su propio ejes
     cv::Rodrigues(rmat, rvec);
 
     double currentTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency();
@@ -122,18 +113,18 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
         return imgpts[0].y; // Depth in the image plane (higher y means further from the camera)
     };
 
-    std::vector<FaceInfo> Faces;
+    std::vector<FaceInfo> FacesInfos;
 
     for (const auto &face : faces)
     {
         FaceInfo faceInfo;
         faceInfo.vertices = face.vertices;
         faceInfo.depth = calculateFaceDepth(face.vertices);
-        Faces.push_back(faceInfo);
+        FacesInfos.push_back(faceInfo);
     }
 
     // Sort base faces and body faces by depth
-    std::sort(Faces.begin(), Faces.end(), [](const FaceInfo &a, const FaceInfo &b)
+    std::sort(FacesInfos.begin(), FacesInfos.end(), [](const FaceInfo &a, const FaceInfo &b)
               {
                   return a.depth > b.depth; // Farther faces drawn first
               });
@@ -148,7 +139,7 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
         cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
     }
     // Draw body faces next
-    for (const auto &faceInfo : Faces)
+    for (const auto &faceInfo : FacesInfos)
     {
         std::vector<cv::Point> points;
         for (const auto &vertex : faceInfo.vertices)

@@ -29,8 +29,8 @@ void LoadCamera::drawShape(cv::Mat &frame, const std::vector<cv::Point2f> &imgpt
 }
 
 LoadCamera::LoadCamera(vector<ObjectProjection> &objectsProjections)
+    : distribution(0, 255)
 {
-    // Objects projections
     this->objectsProjections = objectsProjections;
     // Default camera calibration parameters (needs to be calibrated for actual use)
     this->cameraMatrix = (cv::Mat_<float>(3, 3) << 800, 0, 320, 0, 800, 240, 0, 0, 1);
@@ -38,10 +38,11 @@ LoadCamera::LoadCamera(vector<ObjectProjection> &objectsProjections)
     this->arucoDict = new cv::aruco::Dictionary(cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_50));
     this->detectorParams = new cv::aruco::DetectorParameters();
     this->markerLength = 0.1f;
-    this->rotation = cv::Vec3d(0, 0, 0); // Default rotation
-    this->animationConfig.iluminate = false;
-    this->animationConfig.rotate = true;
-    this->animationConfig.iluminate = false;
+    // Default rotation
+    this->rotation = cv::Vec3d(0, 0, 0);
+    this->animationConfig.spin = false;
+    this->animationConfig.rotate = false;
+    this->animationConfig.iluminate = true;
     this->animationConfig.scaleObject = 0.0;
     this->animationConfig.xTranslation = 0.0;
     this->animationConfig.yTranslation = 0.0;
@@ -72,6 +73,11 @@ void LoadCamera::onMouse(int event, int x, int y, int, void *userdata)
     }
     else if (event == cv::EVENT_MOUSEMOVE && self->isDragging)
     {
+        // cv::Point currentMousePos(x, y);
+        // cv::Point delta = currentMousePos - self->lastMousePos;
+        // self->rotation[0] += delta.y 0.01;  // Rotación en el eje X
+        // self->rotation[1] += delta.x * 0.01;  // Rotación en el eje Y
+        // self->lastMousePos = currentMousePos;
         int dx = x - self->lastMousePos.x;
         int dy = y - self->lastMousePos.y;
         self->lastMousePos = cv::Point(x, y);
@@ -120,6 +126,9 @@ void LoadCamera::showCamera()
                 // Draw axis for each marker
                 cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
+                // Draw circle with sections on marker
+                drawCircleOnMarker(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, radiusCircle, 8); // Example: 8 sections
+
                 // Select the vertices based on the marker ID
                 if (markerIDs[i] == 11)
                 {
@@ -158,6 +167,10 @@ void LoadCamera::showCamera()
             }
         }
 
+        if (spin)
+        {
+            spinBottle();
+        }
         cv::imshow("Camera", frame);
         int key = cv::waitKey(10);
 
@@ -165,6 +178,10 @@ void LoadCamera::showCamera()
         if (rotation[2] > CV_PI)
             rotation[2] -= 2 * CV_PI;
 
+        if (key == 'z')
+        {
+            startSpin();
+        }
         // stop to press 'q' or 'esc'
         if (key == 27 || key == 'q')
         {
@@ -196,14 +213,6 @@ void LoadCamera::showCamera()
             this->animationConfig.rotate = true;
             this->animationConfig.iluminate = false;
             this->animationConfig.spin = false;
-            this->animationConfig.rotationSpeedZ = 0.1;
-        }
-
-        if (key == 'z')
-        {
-            this->animationConfig.spin = true;
-            this->animationConfig.rotate = false;
-            this->animationConfig.rotationSpeedZ = 0;
         }
         if (key == 'd')
         {
@@ -229,5 +238,93 @@ void LoadCamera::showCamera()
         {
             this->animationConfig.scaleObject -= this->animationConfig.scaleStep;
         }
+    }
+}
+
+void LoadCamera::initializeSectionColors(int numSections)
+{
+    if (!colorsInitialized)
+    {
+        sectionColors.clear();
+        sectionTexts.clear(); // Initialize sectionTexts
+        for (int i = 0; i < numSections; ++i)
+        {
+            cv::Scalar randomColor(distribution(generator), distribution(generator), distribution(generator));
+            sectionColors.push_back(randomColor);
+            sectionTexts.push_back("hola"); // Add "hola" text for each section
+        }
+        colorsInitialized = true;
+    }
+}
+
+void LoadCamera::drawCircleOnMarker(cv::Mat &frame, const cv::Vec3d &rvec, const cv::Vec3d &tvec, const cv::Mat &cameraMatrix, const cv::Mat &distCoeffs, float radius, int numSections)
+{
+    initializeSectionColors(numSections);
+
+    // Number of points to approximate each section
+    int totalPoints = numSections * 100;
+    std::vector<cv::Point3f> circlePoints;
+    for (int i = 0; i < totalPoints; ++i)
+    {
+        float angle = 2.0f * CV_PI * i / totalPoints;
+        circlePoints.push_back(cv::Point3f(radius * cos(angle), radius * sin(angle), 0.0f));
+    }
+
+    // Project circle points to the image plane
+    std::vector<cv::Point2f> projectedCirclePoints;
+    cv::projectPoints(circlePoints, rvec, tvec, cameraMatrix, distCoeffs, projectedCirclePoints);
+
+    // Calculate the center of the circle in the image plane
+    std::vector<cv::Point3f> centerPoint3D = {cv::Point3f(0.0f, 0.0f, 0.0f)};
+    std::vector<cv::Point2f> centerPoint2D;
+    cv::projectPoints(centerPoint3D, rvec, tvec, cameraMatrix, distCoeffs, centerPoint2D);
+    cv::Point2f center = centerPoint2D[0];
+
+    // Draw the circle sections with pre-generated colors
+    for (int i = 0; i < numSections; ++i)
+    {
+        cv::Scalar color = sectionColors[i];
+
+        // Create a vector of points for the filled polygon (pie slice)
+        std::vector<cv::Point> pieSlice;
+        pieSlice.push_back(center);
+        for (int j = 0; j <= 100; ++j)
+        {
+            int idx = (i * 100 + j) % totalPoints;
+            pieSlice.push_back(projectedCirclePoints[idx]);
+        }
+
+        // Fill the pie slice
+        cv::fillConvexPoly(frame, pieSlice, color);
+
+        // Draw text at the center of each section
+        int textIdx = (i * 100 + 50) % totalPoints;
+        cv::Point textPos = projectedCirclePoints[textIdx];
+        cv::putText(frame, sectionTexts[i], textPos, cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(255, 255, 255), 1, cv::LINE_AA);
+    }
+}
+
+void LoadCamera::startSpin()
+{
+    spin = true;
+    // spinSpeed = (rand() % 100 + 50) / 10.0; // Random spin speed between 5 and 15
+    spinSpeed = static_cast<float>(rand()) / RAND_MAX * 10 + 10; // Initial spin speed
+    bottleAngle = 0;
+
+    // Set the rotation vector to rotate the bottle 90 degrees around the X-axis
+    rotation = cv::Vec3d(CV_PI / 2.0, 0, 0); // Adjust this
+}
+
+void LoadCamera::spinBottle()
+{
+    bottleAngle += spinSpeed;
+    // 1 eje X
+    // 2
+    rotation[2] = CV_PI - bottleAngle;
+    spinSpeed *= 0.99; // Gradually decrease spin speed
+    if (spinSpeed < 0.1)
+    {
+        spin = false;
+        spinSpeed = 0;
     }
 }

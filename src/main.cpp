@@ -11,7 +11,7 @@ using namespace std;
 
 void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
 {
-    Load3DModel model(modelPath, true, 0, 0, 0.15f, 0.05, scaleFactor);
+    Load3DModel model(modelPath, false, 0, 0, 0.15f, 0.05, scaleFactor);
     vector<cv::Point3f> vertices = model.getVertices();
     vector<cv::Point3f> normals = model.getNormals();
     vector<cv::Point2f> texCoords = model.getTexCoords();
@@ -30,7 +30,7 @@ void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor,
     }
     cout << "---------- REDUCTION TO " << reductionFactor * 100 << "% ----------" << endl;
     cout << "- Post-Reduction Nro de Vertices: " << vertices.size() << endl;
-    ObjectProjection object(vertices, normals, texCoords, faces, max, 0.0, 0.1);
+    ObjectProjection object(vertices, normals, texCoords, faces, max, 3.1, 0.1);
     objects.push_back(object);
     cout << "====================================================" << endl;
 }
