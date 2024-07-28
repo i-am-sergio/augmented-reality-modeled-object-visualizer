@@ -82,7 +82,7 @@ int main()
     // Load camera
     LoadCamera camera(objects);
 
-    if (!camera.openCamera(2))
+    if (!camera.openCamera(0))
     {
         cout << "Camera is not opened" << endl;
         return -1;

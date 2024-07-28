@@ -92,8 +92,8 @@ class LoadCamera {
             this->rotation = cv::Vec3d(0, 0, 0);
 
             this->animationConfig.iluminate = false;
-            this->animationConfig.rotate = false;
-            this->animationConfig.iluminate = true;
+            this->animationConfig.rotate = true;
+            this->animationConfig.iluminate = false;
             this->animationConfig.scaleObject = 0.0;
             this->animationConfig.xTranslation = 0.0;
             this->animationConfig.yTranslation = 0.0;
@@ -222,6 +222,13 @@ class LoadCamera {
                     this->animationConfig.rotate = true;
                     this->animationConfig.iluminate = false;
                     this->animationConfig.spin = false;
+                    this->animationConfig.rotationSpeedZ = 0.1;
+                }
+
+                if(key == 'z'){
+                    this->animationConfig.spin = true;
+                    this->animationConfig.rotate = false;
+                    this->animationConfig.rotationSpeedZ = 0;
                 }
                 if (key == 'd')
                 {
