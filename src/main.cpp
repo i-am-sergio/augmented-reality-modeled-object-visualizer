@@ -16,7 +16,7 @@ using namespace delaunay2d;
 
 void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
 {
-    Load3DModel model(modelPath, true, 0, 0, 0.15f, 0.05, scaleFactor);
+    Load3DModel model(modelPath, false, 0, 0, 0.15f, 0.05, scaleFactor);
     vector<cv::Point3f> vertices = model.getVertices();
     vector<cv::Point3f> normals = model.getNormals();
     vector<cv::Point2f> texCoords = model.getTexCoords();
