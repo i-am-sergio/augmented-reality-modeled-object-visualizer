@@ -30,10 +30,34 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
     // Convert rotation vector to rotation matrix
     cv::Mat rmat;
     cv::Rodrigues(rvec, rmat);
+    cv::Mat addRotXR = (cv::Mat_<double>(3, 3) << 1, 0, 0,
+                       0, cos(additionalRotation[0]), -sin(additionalRotation[0]),
+                       0, sin(additionalRotation[0]), cos(additionalRotation[0]));
+    cv::Mat addRotYR = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), 0, sin(additionalRotation[1]),
+                       0, 1, 0,
+                       -sin(additionalRotation[1]), 0, cos(additionalRotation[1]));
+    //en su propio eje
+    cv::Mat addRotZR = (cv::Mat_<double>(3, 3) << cos(additionalRotation[2]), -sin(additionalRotation[2]), 0,
+                       sin(additionalRotation[2]), cos(additionalRotation[2]), 0,
+                       0, 0, 1);
+
+
     cv::Mat addRotX = (cv::Mat_<double>(3, 3) << 1, 0, 0, 0, cos(additionalRotation[0]), -sin(additionalRotation[0]), 0, sin(additionalRotation[0]), cos(additionalRotation[0]));
     cv::Mat addRotY = (cv::Mat_<double>(3, 3) << cos(additionalRotation[1]), -sin(additionalRotation[1]), 0, sin(additionalRotation[1]), cos(additionalRotation[1]), 0, 0, 0, 1);
     cv::Mat addRotZ = (cv::Mat_<double>(3, 3) << cos(additionalRotation[2]), 0, sin(additionalRotation[2]), 0, 1, 0, -sin(additionalRotation[2]), 0, cos(additionalRotation[2]));
-    rmat = rmat * addRotX * addRotY * addRotZ; // en su propio ejes
+
+    if (animationConfig.spin == true)
+    {
+        rmat = rmat * addRotX * addRotY * addRotZ; // en su propio eje
+    }
+
+    if (animationConfig.rotate == true)
+    {
+        rmat = rmat * addRotXR * addRotYR * addRotZR; // en su propio eje
+    }
+
+
+
     cv::Rodrigues(rmat, rvec);
 
     double currentTime = static_cast<double>(cv::getTickCount()) / cv::getTickFrequency();
