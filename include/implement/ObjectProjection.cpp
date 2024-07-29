@@ -138,6 +138,14 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
     {
         cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
     }
+    // Colors for IncaKola
+    cv::Scalar topBottomColor(0, 255, 255); // Top and Bot yellow
+    cv::Scalar labelColor(255, 0, 0);       // Mid blue
+    
+    // Max and Min
+    double topMaxZ = 0.1;
+    double bottomMinZ = 0.2;
+    
     // Draw body faces next
     for (const auto &faceInfo : FacesInfos)
     {
@@ -146,8 +154,41 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
         {
             points.push_back(imgpts[vertex - 1]);
         }
+    
+        // Calcular el centroide de la cara para determinar su altura
+        cv::Point3f centroid(0.0, 0.0, 0.0);
+        for (const auto &vertexIndex : faceInfo.vertices)
+        {
+            centroid += vertices[vertexIndex - 1];
+        }
+        centroid /= static_cast<double>(faceInfo.vertices.size());
+    
+        // Imprimir el valor del centroide en z para depuración
+        //std::cout << "centroid.z: " << centroid.z << std::endl;
+    
+        // Determinar el color basado en la altura del centroide
+        cv::Scalar fillColor;
+        if (centroid.z < topMaxZ)
+        {
+            fillColor = topBottomColor; // Color amarillo para la parte superior
+            // std::cout << "entro a la parte superior" << std::endl;
+        }
+        else if (centroid.z > bottomMinZ)
+        {
+            fillColor = topBottomColor; // Color amarillo para la parte inferior
+            // std::cout << "entro a la parte inferior" << std::endl;
+        }
+        else
+        {
+            fillColor = labelColor; // Color de la etiqueta
+            // std::cout << "entro a la etiqueta" << std::endl;
+        }
+    
+        // Debugging: imprimir el color asignado
+        //std::cout << "fillColor: " << fillColor << std::endl;
+    
         double intensity = calculateIllumination(vertices[faceInfo.vertices[0] - 1], vertices[faceInfo.vertices[1] - 1], vertices[faceInfo.vertices[2] - 1], lightPos);
-        cv::Scalar fillColor = animationConfig.baseColor * intensity;
+        fillColor *= intensity;
         cv::polylines(image, points, true, fillColor, 1);
         cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
     }
