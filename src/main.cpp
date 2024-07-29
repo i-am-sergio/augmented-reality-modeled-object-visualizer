@@ -41,18 +41,20 @@ int main()
     vector<ObjectProjection> objects;
     loadAndAddModel("models/botellapoissonmesh.obj", false, 0.003f, 0.3f, objects, 0.9f); // botella con poisson mesh generado por src/ply2obj.cpp
     loadAndAddModel("models/wolf.obj", true, 0.0005f, 0.9f, objects, 0.15f); // funciona
-    loadAndAddModel("models/rat.obj", true, 0.01f, 0.5f, objects, 0.1f); // funciona
-    loadAndAddModel("models/pegasus.obj", true, 0.08f, 0.05f, objects, 0.15f); // funciona
+    loadAndAddModel("models/nescafe.obj", true, 1.8f, 0.15f, objects, 0.15f, 0.0f,0.0f,-1.0f); // funciona
+    loadAndAddModel("models/smartphone.obj", true, 0.1f, 0.2f, objects, 0.15f); // funciona
+    loadAndAddModel("models/pegasus.obj", true, 0.1f, 0.05f, objects, 0.15f); // funciona
+    loadAndAddModel("models/rat.obj", true, 0.007f, 0.5f, objects, 0.1f); // funciona
     loadAndAddModel("models/fox.obj", true, 0.004f, 1.0f, objects, 0.15f); // funciona
     loadAndAddModel("models/sheet.obj", true, 0.1f, 1.0f, objects, 0.15f); // funciona
-    // loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f);    // botella con mesh 3d generada por python
+    // loadAndAddModel("models/chess_pawn.obj", false, 0.15f, 0.05f, objects, 0.15f); // funciona
+    // loadAndAddModel("models/chess_knight.obj", false, 0.06f, 0.008f, objects, 2.0f); // funciona
+    // loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f); // funciona
     // loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
 
     // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
-    // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/botella.obj", 0.003f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
-    // loadAndAddModel("models/sphere10000.obj", 0.002f, 0.5f, objects, 0.2f);
     // loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
 
     // Load camera

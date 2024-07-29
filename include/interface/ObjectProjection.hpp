@@ -31,7 +31,7 @@ private:
     std::vector<cv::Point3f> normals;
     std::vector<cv::Point2f> texCoords;
     std::vector<Face> faces;
-    float maxDistancePercentage;
+    float maxDistancePercentage; // Maximum distance percentage to the camera
     double lightSpeed;  // Speed of light movement in radians per second
     double lightRadius; // Radius of light orbit
     double startTime;   // Time variable to keep track of the animation
