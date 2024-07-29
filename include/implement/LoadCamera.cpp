@@ -150,7 +150,27 @@ void LoadCamera::showCamera()
                 else if (markerIDs[i] == 14)
                 {
                     // objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[3].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 15)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                     objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 16)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[5].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 17)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[6].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 18)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[7].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
                 }
                 else if (markerIDs[i] == 40)
                 {
