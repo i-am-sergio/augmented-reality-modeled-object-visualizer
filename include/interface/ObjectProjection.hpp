@@ -32,9 +32,10 @@ private:
     std::vector<cv::Point2f> texCoords;
     std::vector<Face> faces;
     float maxDistancePercentage; // Maximum distance percentage to the camera
-    double lightSpeed;  // Speed of light movement in radians per second
-    double lightRadius; // Radius of light orbit
-    double startTime;   // Time variable to keep track of the animation
+    double lightSpeed;           // Speed of light movement in radians per second
+    double lightRadius;          // Radius of light orbit
+    double startTime;            // Time variable to keep track of the animation
+    bool color;                  // Color flag
 
 public:
     ObjectProjection(const std::vector<cv::Point3f> &vertices,
@@ -42,7 +43,7 @@ public:
                      const std::vector<cv::Point2f> &texCoords,
                      const std::vector<Face> &faces,
                      float maxDistancePercentage, double lightSpeed = 1.0,
-                     double lightRadius = 0.4);
+                     double lightRadius = 0.4, bool colorStatus = false);
     void drawObject(cv::Mat &image, cv::Vec3d rvec,
                     cv::Vec3d tvec, const cv::Mat &cameraMatrix,
                     const cv::Mat &distCoeffs,
