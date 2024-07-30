@@ -39,7 +39,7 @@ int main()
 {
     // Load 3D models
     vector<ObjectProjection> objects;
-    loadAndAddModel("models/botellapoissonmesh.obj", false, 0.003f, 0.3f, false, objects, 0.9f);        // botella con poisson mesh generado por src/ply2obj.cpp
+    loadAndAddModel("models/botellapoissonmesh.obj", false, 0.003f, 0.3f, true, objects, 0.9f);        // botella con poisson mesh generado por src/ply2obj.cpp
     loadAndAddModel("models/wolf.obj", true, 0.0005f, 0.9f, false, objects, 0.15f);                     // funciona
     loadAndAddModel("models/nescafe.obj", true, 1.8f, 0.15f, false, objects, 0.15f, 0.0f, 0.0f, -1.0f); // funciona
     loadAndAddModel("models/smartphone.obj", true, 0.1f, 0.2f, false, objects, 0.15f);                  // funciona

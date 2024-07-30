@@ -259,13 +259,14 @@ void LoadCamera::initializeSectionColors(int numSections)
 {
     if (!colorsInitialized)
     {
+        std::vector<std::string> texts = {"Kiss", "Slap", "Punch", "Truth or Dare", "Strip Tease", "Drink Shot", "Lap Dance", "Massage", "Blindfold Fun", "Body Shots"};
         sectionColors.clear();
         sectionTexts.clear(); // Initialize sectionTexts
         for (int i = 0; i < numSections; ++i)
         {
             cv::Scalar randomColor(distribution(generator), distribution(generator), distribution(generator));
             sectionColors.push_back(randomColor);
-            sectionTexts.push_back("hola"); // Add "hola" text for each section
+            sectionTexts.push_back(texts[i]); // Add "hola" text for each section
         }
         colorsInitialized = true;
     }
