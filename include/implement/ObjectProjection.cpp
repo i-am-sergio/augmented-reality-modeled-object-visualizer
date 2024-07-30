@@ -157,7 +157,7 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
     }
     for (const auto &pt : lightSourceImgPts)
     {
-        // cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
+        cv::circle(image, pt, 10, cv::Scalar(255, 255, 255), -1);
     }
     // Colors for IncaKola
     cv::Scalar topBottomColor(0, 255, 255); // Top and Bot yellow
@@ -216,8 +216,8 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
         // std::cout << "fillColor: " << fillColor << std::endl;
 
         double intensity = calculateIllumination(vertices[faceInfo.vertices[0] - 1], vertices[faceInfo.vertices[1] - 1], vertices[faceInfo.vertices[2] - 1], lightPos);
-        // fillColor *= intensity;
+        fillColor *= intensity;
         cv::polylines(image, points, true, fillColor, 1);
-        // cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
+        cv::fillConvexPoly(image, points, fillColor, cv::LINE_AA);
     }
 }
