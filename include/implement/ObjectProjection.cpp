@@ -52,7 +52,7 @@ void ObjectProjection::drawObject(cv::Mat &image, cv::Vec3d rvec, cv::Vec3d tvec
 
     if (animationConfig.rotate == true)
     {
-        rmat = rmat * addRotXR * addRotYR * addRotZR; // en su propio eje
+        rmat = rmat * addRotXR * addRotYR; // en su propio eje
     }
 
     cv::Rodrigues(rmat, rvec);
