@@ -9,9 +9,9 @@
 #include "KMeansReduction.hpp"
 using namespace std;
 
-void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
+void loadAndAddModel(string modelPath, bool swapyz, float scaleFactor, float reductionFactor, bool color, vector<ObjectProjection> &objects, float max = 1.0, float dx = 0, float dy = 0, float dz = 0.15f)
 {
-    Load3DModel model(modelPath, false, 0, 0, 0.15f, 0.05, scaleFactor);
+    Load3DModel model(modelPath, swapyz, 0, 0, 0.15f, 0.05, scaleFactor);
     vector<cv::Point3f> vertices = model.getVertices();
     vector<cv::Point3f> normals = model.getNormals();
     vector<cv::Point2f> texCoords = model.getTexCoords();
@@ -30,7 +30,7 @@ void loadAndAddModel(string modelPath, float scaleFactor, float reductionFactor,
     }
     cout << "---------- REDUCTION TO " << reductionFactor * 100 << "% ----------" << endl;
     cout << "- Post-Reduction Nro de Vertices: " << vertices.size() << endl;
-    ObjectProjection object(vertices, normals, texCoords, faces, max, 3.1, 0.1);
+    ObjectProjection object(vertices, normals, texCoords, faces, max, 3.1, 0.1, color);
     objects.push_back(object);
     cout << "====================================================" << endl;
 }
@@ -39,20 +39,22 @@ int main()
 {
     // Load 3D models
     vector<ObjectProjection> objects;
-    loadAndAddModel("models/botellapoissonmesh.obj", 0.003f, 0.3f, objects, 0.9f); // botella con poisson mesh generado por src/ply2obj.cpp
-    loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f);    // botella con mesh 3d generada por python
-    loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
-    // loadAndAddModel("models/wolf.obj", 0.0005f, 0.9f, objects, 0.15f); // funciona
-    // loadAndAddModel("models/fox.obj", 0.004f, 1.0f, objects, 0.15f); // funciona
-    // loadAndAddModel("models/pegasus.obj", 0.08f, 0.05f, objects, 0.15f); // funciona
+    loadAndAddModel("models/botellapoissonmesh.obj", false, 0.003f, 0.3f, true, objects, 0.9f);         // botella con poisson mesh generado por src/ply2obj.cpp
+    loadAndAddModel("models/wolf.obj", true, 0.0005f, 0.9f, false, objects, 0.15f);                     // funciona
+    loadAndAddModel("models/nescafe.obj", true, 1.8f, 0.15f, false, objects, 0.15f, 0.0f, 0.0f, -1.0f); // funciona
+    loadAndAddModel("models/smartphone.obj", true, 0.1f, 0.2f, false, objects, 0.15f);                  // funciona
+    loadAndAddModel("models/pegasus.obj", true, 0.1f, 0.05f, false, objects, 0.15f);                    // funciona
+    loadAndAddModel("models/rat.obj", true, 0.007f, 0.5f, false, objects, 0.1f);                        // funciona
+    loadAndAddModel("models/fox.obj", true, 0.004f, 1.0f, false, objects, 0.15f);                       // funciona
+    loadAndAddModel("models/sheet.obj", true, 0.1f, 1.0f, false, objects, 0.15f);                       // funciona
+    // loadAndAddModel("models/chess_pawn.obj", false, 0.15f, 0.05f, objects, 0.15f); // funciona
+    // loadAndAddModel("models/chess_knight.obj", false, 0.06f, 0.008f, objects, 2.0f); // funciona
+    // loadAndAddModel("models/botellawithmesh.obj", 0.003f, 0.3f, objects, 0.9f); // funciona
+    // loadAndAddModel("models/botella4mesh.obj", 0.002f, 0.5f, objects, 0.9f);
 
-    // loadAndAddModel("models/sheet.obj", 0.1f, 1.0f, objects, 0.15f);
-    // loadAndAddModel("models/rat.obj", 0.01f, 0.5f, objects, 0.1f);
-    // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/botella.obj", 0.001f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/botella.obj", 0.003f, 0.1f, objects, 0.9f);
     // loadAndAddModel("models/sphere1000.obj", 0.002f, objects, 0.9f);
-    // loadAndAddModel("models/sphere10000.obj", 0.002f, 0.5f, objects, 0.2f);
     // loadAndAddModel("models/woody-toy-story/source/woody.obj", 0.15f, objects);
 
     // Load camera
@@ -63,7 +65,6 @@ int main()
         cout << "Camera is not opened" << endl;
         return -1;
     }
-
     camera.showCamera();
 
     return 0;

@@ -41,14 +41,14 @@ LoadCamera::LoadCamera(vector<ObjectProjection> &objectsProjections)
     // Default rotation
     this->rotation = cv::Vec3d(0, 0, 0);
     this->animationConfig.spin = false;
-    this->animationConfig.rotate = false;
-    this->animationConfig.iluminate = true;
+    this->animationConfig.rotate = true;
+    this->animationConfig.iluminate = false;
     this->animationConfig.scaleObject = 0.0;
     this->animationConfig.xTranslation = 0.0;
     this->animationConfig.yTranslation = 0.0;
     this->animationConfig.step = 0.01;
     this->animationConfig.scaleStep = 0.1;
-    this->animationConfig.rotationSpeedZ = 0;
+    this->animationConfig.rotationSpeedZ = 0.1;
     this->animationConfig.baseColor = cv::Scalar(0, 255, 0); // Green
 }
 
@@ -127,8 +127,10 @@ void LoadCamera::showCamera()
                 cv::drawFrameAxes(frame, cameraMatrix, distCoeffs, rvecs[i], tvecs[i], markerLength);
 
                 // Draw circle with sections on marker
-                drawCircleOnMarker(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, radiusCircle, 8); // Example: 8 sections
-
+                if (animationConfig.spin == true)
+                {
+                    drawCircleOnMarker(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, radiusCircle, 8); // Example: 8 sections
+                }
                 // Select the vertices based on the marker ID
                 if (markerIDs[i] == 11)
                 {
@@ -148,7 +150,27 @@ void LoadCamera::showCamera()
                 else if (markerIDs[i] == 14)
                 {
                     // objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[3].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 15)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
                     objectsProjections[4].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 16)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[5].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 17)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[6].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
+                }
+                else if (markerIDs[i] == 18)
+                {
+                    // objectsProjections[1].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, movement);
+                    objectsProjections[7].drawObject(frame, rvecs[i], tvecs[i], cameraMatrix, distCoeffs, rotation, animationConfig);
                 }
                 else if (markerIDs[i] == 40)
                 {
@@ -178,11 +200,6 @@ void LoadCamera::showCamera()
         if (rotation[2] > CV_PI)
             rotation[2] -= 2 * CV_PI;
 
-        if (key == 'z')
-        {
-            startSpin();
-        }
-        // stop to press 'q' or 'esc'
         if (key == 27 || key == 'q')
         {
             break;
@@ -196,24 +213,21 @@ void LoadCamera::showCamera()
             currentColorIndex = (currentColorIndex + 1) % baseColors.size();
             this->animationConfig.baseColor = baseColors[currentColorIndex];
         }
-        if (key == 'g')
+        if (key == 'z')
         {
-            this->animationConfig.rotate = false;
-            this->animationConfig.iluminate = false;
-            this->animationConfig.spin = true;
-        }
-        if (key == 'i')
-        {
-            this->animationConfig.rotate = false;
-            this->animationConfig.iluminate = true;
-            this->animationConfig.spin = false;
+            startSpin();
         }
         if (key == 'r')
         {
+            this->rotation = cv::Vec3d(0, 0, 0);
             this->animationConfig.rotate = true;
-            this->animationConfig.iluminate = false;
+            this->spin = false;
+            this->spinSpeed = 0;
+            this->bottleAngle = 0;
+            this->animationConfig.rotationSpeedZ = 0.1;
             this->animationConfig.spin = false;
         }
+
         if (key == 'd')
         {
             this->animationConfig.xTranslation += this->animationConfig.step;
@@ -245,13 +259,14 @@ void LoadCamera::initializeSectionColors(int numSections)
 {
     if (!colorsInitialized)
     {
+        std::vector<std::string> texts = {"Kiss", "Slap", "Punch", "Truth or Dare", "Strip Tease", "Drink Shot", "Lap Dance", "Massage", "Blindfold Fun", "Body Shots"};
         sectionColors.clear();
         sectionTexts.clear(); // Initialize sectionTexts
         for (int i = 0; i < numSections; ++i)
         {
             cv::Scalar randomColor(distribution(generator), distribution(generator), distribution(generator));
             sectionColors.push_back(randomColor);
-            sectionTexts.push_back("hola"); // Add "hola" text for each section
+            sectionTexts.push_back(texts[i]); // Add "hola" text for each section
         }
         colorsInitialized = true;
     }
@@ -313,18 +328,20 @@ void LoadCamera::startSpin()
 
     // Set the rotation vector to rotate the bottle 90 degrees around the X-axis
     rotation = cv::Vec3d(CV_PI / 2.0, 0, 0); // Adjust this
+    this->animationConfig.rotationSpeedZ = 0;
+    this->animationConfig.spin = true;
+    this->animationConfig.rotate = false;
 }
 
 void LoadCamera::spinBottle()
 {
     bottleAngle += spinSpeed;
-    // 1 eje X
     // 2
     rotation[2] = CV_PI - bottleAngle;
     spinSpeed *= 0.99; // Gradually decrease spin speed
     if (spinSpeed < 0.1)
     {
-        spin = false;
+        // spin = false;
         spinSpeed = 0;
     }
 }

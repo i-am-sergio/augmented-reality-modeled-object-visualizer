@@ -6,7 +6,7 @@ int main() {
     generator.generateMarkers();
 
     // Generate markers from 1 to 10
-    std::vector<int> markerIds2 = {11, 12, 13, 14, 15, 40, 41};
+    std::vector<int> markerIds2 = {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 40, 41};
     PatternsGenerator<cv::aruco::DICT_4X4_50> generator2(400, 200, markerIds2);
     generator2.generateMarkers();
     
